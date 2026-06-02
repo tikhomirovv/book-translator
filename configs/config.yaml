@@ -1,0 +1,58 @@
+# Default application config (committed). Override via config.local.yaml or env.
+
+chunk:
+  size_paragraphs: 10
+  overlap_paragraphs: 2
+
+context:
+  strategy: fixed_window
+  max_tokens: 2000
+
+llm:
+  model: gpt-4o-mini
+  temperature: 0.3
+  max_tokens: 4096
+
+request_delay_ms: 1000
+
+allowed_languages:
+  - ru
+  - en
+  - de
+
+prompts:
+  nonfiction:
+    system: |
+      You are a professional translator. Preserve meaning, tone, and terminology.
+      The source language will be detected automatically; translate into {{.TargetLang}}.
+    translation: |
+      Translate the following text to {{.TargetLang}}. Keep formatting and paragraph breaks.
+      Context from earlier in the book:
+      {{.ContextBlock}}
+
+      Text:
+      {{.ChunkText}}
+    context_extraction: |
+      From this book excerpt, extract only information that should be remembered for consistent
+      translation later (terms, names, concepts, style notes — whatever matters for THIS book).
+      Return concise structured notes, not a summary of plot unless it is a fiction work.
+      Target language: {{.TargetLang}}
+
+      Text:
+      {{.ChunkText}}
+  fiction:
+    system: |
+      You are a literary translator into {{.TargetLang}}. Preserve voice, dialogue, and character names.
+    translation: |
+      Translate to {{.TargetLang}} with literary quality.
+      Context:
+      {{.ContextBlock}}
+
+      Text:
+      {{.ChunkText}}
+    context_extraction: |
+      Extract characters, places, terms, and plot threads that must stay consistent.
+      Target: {{.TargetLang}}
+
+      Text:
+      {{.ChunkText}}

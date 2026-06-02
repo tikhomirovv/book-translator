@@ -10,6 +10,7 @@
 .env
 config.local.yaml
 configs/config.local.yaml
+/bin/
 
 # Runtime translation data
 /translations/
