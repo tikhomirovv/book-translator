@@ -1,0 +1,7 @@
+# Copy to config.local.yaml (gitignored) to override defaults locally.
+#
+# chunk:
+#   size_paragraphs: 5
+#
+# llm:
+#   model: gpt-4o
