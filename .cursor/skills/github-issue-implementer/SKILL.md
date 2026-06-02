@@ -7,7 +7,20 @@ description: Implements GitHub issues end-to-end — reads project context, pick
 
 Execution workflow for the **implementer agent**. This skill is about **doing the work**, not planning or organizing the backlog.
 
-For issue selection rules and dependency graphs, see the `github-project-ops` skill. For product and technical context, see the `project-docs` skill.
+## Standalone use
+
+This skill is **self-contained** and must work in **any repository**, with or without other skills installed.
+
+## Optional related skills
+
+If another skill is available in the workspace, **use it** — but **never stop or fail** because it is missing:
+
+| Skill (if present) | Purpose |
+|--------------------|---------|
+| `github-project-ops` | Backlog decomposition, `blocked by` dependencies, milestones |
+| `project-docs` | Product/tech context in `.docs/` |
+
+When a related skill is absent, follow **this document** and discover context from the repo (README, issues, CI config, code layout) directly.
 
 ## Role
 
@@ -17,9 +30,9 @@ You are the implementer:
 - Ask **only blocking questions** — things you cannot infer from docs, the issue, or the codebase.
 - Stop and notify the user when work is **done** or **paused** (blocked, scope change, or awaiting human input).
 - Leave **brief issue comments** at key stages so progress is visible in GitHub, not only in chat.
-- End with a **pull request** (`Closes #N`). Then follow the **merge policy** (below) before starting the next issue.
+- End with a **pull request** (`Closes #N`). Then follow the **execution mode** (below) before starting the next issue.
 
-Do not reorganize the backlog, create new milestones, or rewrite `.docs/` unless the issue requires it.
+Do not reorganize the backlog, create new milestones, or rewrite product docs unless the issue requires it.
 
 ## Sequential execution (default)
 
@@ -37,48 +50,76 @@ issue #N → branch issue/N-slug → implement → test → PR → merge & close
 | Branch base | Always branch from **updated `main`** (or default branch) after the previous issue is merged. |
 | Next issue | Start issue #N+1 only when #N is **merged** and closed (or user explicitly overrides). |
 | No batching | Do **not** combine multiple issues in one branch/PR unless the user **explicitly** asks (e.g. «в одном PR», «батчем»). |
-| Dependencies | Never start an issue whose `blocked_by` issues are still open (see `github-project-ops`). |
+| Dependencies | Never start an issue whose `blocked_by` issues are still open (use `github-project-ops` if available; otherwise read issue links / milestone order). |
 
-**Anti-pattern:** `issue/1-4-foundation` with `Closes #1, #2, #3, #4` — only when the user explicitly requested a batch.
+**Anti-pattern:** one branch/PR with `Closes #1, #2, #3` — only when the user **explicitly** requested a batch.
 
-## Merge policy (ask if unclear)
+## Execution modes (ask if unclear)
 
-At the **start** of an implementation session (before the first issue), if the user has **not** said whether to merge automatically, **ask once**:
+Two workflows. At the **start** of a session (before the first issue), if the user has **not** chosen a mode, **ask once**:
 
-> После каждого PR: **(A)** мержить автоматически и сразу брать следующую задачу, или **(B)** остановиться и ждать вашего ревью?
+> How should I handle each PR after CI passes?  
+> **(A) Autonomous** — merge, close the issue, pull `main`, continue to the next task without waiting.  
+> **(B) Review-driven** — stop after opening the PR; you review and merge when ready.
 
-| Mode | Behavior after PR is opened and CI is green |
-|------|---------------------------------------------|
-| **A — auto-merge** | `gh pr merge` (use repo default: merge/squash as appropriate), `git checkout main && git pull`, then continue to the next issue in the same session. |
-| **B — wait for review** (default if user does not choose) | Stop. Notify user with PR link. Do **not** merge. Do **not** start the next issue until the user merges or asks to continue. |
+### Mode A — Autonomous (full pipeline, no user gate per issue)
 
-If the user already stated their preference in the current conversation, do not ask again.
+Use when the user wants the agent to run through the backlog with minimal interruption.
 
-**Explicit overrides:**
+After PR is opened and **CI is green**:
 
-- User says «мержи сам», «auto-merge», «не жди ревью» → mode A for this session.
-- User says «жди ревью», «не мержи», «stop after PR» → mode B.
+1. **Merge** the PR (`gh pr merge` — match repo settings: merge commit / squash / rebase).
+2. **Close the issue** — normally automatic via `Closes #N` on merge. **Verify** the issue is closed (`gh issue view N --json state`). If still open, close it (`gh issue close N`) and note why linking failed.
+3. **Update local default branch:** `git checkout main && git pull --ff-only` (or the repo’s default branch).
+4. **Comment** on the issue briefly (merged, tests passed) if useful.
+5. **Continue** to the next issue in the same session (sequential rules above).
+
+Do **not** stop after each PR waiting for the user unless blocked or tests fail.
+
+### Mode B — Review-driven (user reviews code)
+
+Use when the user wants to **review diffs** and stay in the loop technically.
+
+After PR is opened and CI is green:
+
+1. **Notify** the user with PR link and short summary.
+2. **Do not merge** the PR.
+3. **Do not close** the issue manually — it should close when the **user** merges the PR (`Closes #N`).
+4. **Do not start** the next issue until the user merges (or explicitly says to continue).
+
+The user merges when satisfied; issue closure is a consequence of their merge, not agent action.
+
+### Choosing and remembering the mode
+
+| Signal | Mode |
+|--------|------|
+| User did not specify | Ask once (A or B) |
+| «auto-merge», «мержи сам», «без ревью», «продолжай сам» | A |
+| «жди ревью», «не мержи», «stop after PR», «хочу ревьюить» | B |
+| Already stated earlier in the conversation | Do not ask again |
+
+**Default if user refuses to choose:** Mode B (safer).
 
 ## Workflow Overview
 
 ```
-Orient → Merge policy? → Select ONE issue → Branch from main → Implement → Verify → PR → Merge gate → (next issue)
+Orient → Execution mode (A/B)? → Select ONE issue → Branch → Implement → Verify → PR → Mode gate → (next issue)
 ```
 
 Track progress with this checklist:
 
 ```
-- [ ] Context read (.docs/ + issue + repo state)
+- [ ] Context read (docs if present + issue + repo state)
+- [ ] Execution mode A or B confirmed
 - [ ] Issue selected (specified or auto-picked)
 - [ ] Feature branch created and checked out
 - [ ] Acceptance criteria implemented
 - [ ] Tests added/updated (same change set)
-- [ ] `go test ./...` passes locally **or** CI checks green after push
-- [ ] `docker build` passes locally **or** CI docker job green after push
+- [ ] Project tests pass locally **or** CI checks green after push (see Makefile / README / CI workflow)
 - [ ] Key stages commented on the issue (see below)
 - [ ] User notified (done or paused)
 - [ ] Pull request opened (when implementation is complete; `Closes #N` — single issue)
-- [ ] Merge policy applied (merged + main pulled, or stopped for user review)
+- [ ] Mode gate applied (A: merged + issue closed + main pulled; B: stopped for user review)
 - [ ] Only then: next issue (if sequential run continues)
 ```
 
@@ -86,8 +127,10 @@ Track progress with this checklist:
 
 Before writing code:
 
-1. Read `.docs/` in order: `project-overview.md` → `prd.md` → `technical-design.md`.
-2. Inspect the repository — layout, existing packages, conventions, test patterns.
+1. **Product/tech context** (first match wins):
+   - If skill `project-docs` exists or `.docs/` is present: read `project-overview.md` → `prd.md` → `technical-design.md`.
+   - Else: README, CONTRIBUTING, and the target issue body.
+2. Inspect the repository — layout, conventions, test commands (Makefile, package scripts, CI).
 3. Use `gh` to understand backlog state:
    - Open issues for the active milestone (default: earliest incomplete milestone, usually MVP first).
    - Read the target issue body and acceptance criteria.
@@ -129,19 +172,19 @@ If a branch for this issue already exists and has WIP the user wants continued, 
 
 ## Step 4 — Implement
 
-Follow the issue acceptance criteria and `.docs/technical-design.md`.
+Follow the issue acceptance criteria and any technical design doc in the repo (e.g. `.docs/technical-design.md`).
 
 ### Coding rules
 
 - Match existing project conventions (structure, naming, error handling).
 - Keep changes scoped to the issue — no drive-by refactors.
-- Core business logic stays in `internal/core`; clients stay thin.
-- Use ports/interfaces for external dependencies (LLM, payments, storage) so core stays testable.
+- Separate domain/business logic from delivery layers (CLI, HTTP, adapters) when the repo already does — follow local patterns.
+- Use interfaces/ports for external dependencies when the architecture uses them.
 - Tests are **mandatory** for changed business logic — include them in the same change set, not a follow-up PR.
 
 ### Questions policy
 
-- **Do not ask** for decisions already documented in `.docs/` or the issue.
+- **Do not ask** for decisions already documented in repo docs or the issue.
 - **Do not ask** for permission to proceed with the obvious implementation path.
 - **Do ask** only when missing information **blocks** progress — e.g. missing API keys with no stub path, contradictory acceptance criteria, destructive choice with no default.
 - Ask **one focused question** at a time. While waiting, stop work and report paused state.
@@ -183,17 +226,17 @@ Keep a lightweight paper trail on the issue via `gh issue comment N --body "..."
 **PR:** #M (or full URL)
 
 - [acceptance criterion → what was done]
-- Tests: `go test ./...` — pass
+- Tests: [project test command] — pass
 ```
 
-Do not close the issue manually — let the PR (`Closes #N`) close it on merge.
+**Issue closure:** In **mode B**, do not close the issue — the user merges when ready. In **mode A**, the issue closes on merge via `Closes #N`; verify it is closed after you merge.
 
 ## Step 5 — Verify
 
 Before notifying the user or opening a PR:
 
-1. Run tests locally **if Go is available**: `go test ./...` (or the project's documented test command).
-2. If local Go/Docker are **not** available, rely on **GitHub Actions** after push — CI runs `go test ./...` and `docker build`; wait for checks and report status.
+1. Run the project's documented test command locally when the toolchain is available (Makefile, README, `package.json`, etc.).
+2. If local tools are unavailable, rely on **CI** after push; wait for required checks and report status.
 3. Fix failures before proceeding (locally or via follow-up commits until CI is green).
 4. Review the diff against acceptance criteria — every criterion met or explicitly deferred with user approval.
 
@@ -216,12 +259,11 @@ Always stop and report when implementation is **complete** or **paused**. Mirror
 - [bullets mapped to acceptance criteria]
 
 ### Tests
-- `go test ./...` — pass
+- [project test command] — pass
 
 ### Next
-- Review the PR and diff
-- Run tests locally if you want
-- Request changes or merge when satisfied
+- **Mode B:** review the PR; merge when satisfied (issue closes on merge).
+- **Mode A:** (agent continues to next issue.)
 ```
 
 ### Paused template
@@ -263,7 +305,7 @@ Closes #N
 <!-- Exactly one issue per PR unless user explicitly requested a batch. -->
 
 ## Test plan
-- [ ] `go test ./...`
+- [ ] [project test command from CI/Makefile]
 - [ ] [manual steps if relevant]
 
 ## Notes
@@ -275,9 +317,9 @@ Link the issue with `Closes #N` (or `Fixes #N`) so it auto-closes on merge.
 ### After PR
 
 1. Report CI status.
-2. Apply **merge policy** (see above):
-   - **Mode A:** merge PR, `git checkout main && git pull --ff-only`, comment on issue if helpful, proceed to next issue.
-   - **Mode B:** stop; tell user the PR is ready for review; do not start the next issue.
+2. Apply **execution mode** (see above):
+   - **Mode A:** merge PR → verify issue **closed** → `git pull` on default branch → next issue.
+   - **Mode B:** stop → PR ready for user review → do not merge or close issue → wait for user.
 
 ## Boundaries
 
@@ -285,16 +327,16 @@ Link the issue with `Closes #N` (or `Fixes #N`) so it auto-closes on merge.
 |----|-------|
 | **One issue** per branch and per PR | Pack multiple issues into one PR without explicit user request |
 | Work **sequentially** from updated `main` when user asks for ordered execution | Start #N+1 before #N is merged (unless user overrides) |
-| Ask **merge policy** once per session if not specified | Assume auto-merge or assume wait-for-review without asking |
-| Read `.docs/` before coding | Store long-term requirements only in issues |
+| Ask **execution mode (A/B)** once per session if not specified | Assume mode without asking |
+| Read repo docs (`.docs/` if present) before coding | Store long-term requirements only in issues |
+| **Mode A:** merge, verify issue closed, pull main, continue | Merge or close issues in mode B |
+| **Mode B:** stop after PR; user merges and closes | Start next issue before user merges in mode B |
 | Respect issue dependencies | Start blocked issues without override |
 | Ask minimal blocking questions | Ask preference questions already answered in docs |
 | Add tests with feature code | Defer tests to a follow-up PR |
 | Comment on issue at key stages | Dump verbose play-by-play on every commit |
-| Merge only in **mode A** or when user explicitly asks | Merge silently in mode B |
 | Commit on feature branch | Commit directly on main/master |
 
-## Related Skills
+## Optional related skills (reference)
 
-- **`project-docs`** — product and technical source of truth in `.docs/`
-- **`github-project-ops`** — backlog organization, dependencies, milestone structure
+See **Optional related skills** at the top. This skill does not require them.
