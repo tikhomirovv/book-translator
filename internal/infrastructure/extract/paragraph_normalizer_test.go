@@ -3,7 +3,7 @@ package extract_test
 import (
 	"testing"
 
-	"github.com/tikhomirovv/book-translater/internal/infrastructure/extract"
+	"github.com/tikhomirovv/book-translator/internal/infrastructure/extract"
 )
 
 func TestNormalizeParagraphs(t *testing.T) {

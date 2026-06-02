@@ -1,11 +1,11 @@
-// Command translator is the CLI entrypoint for book-translater.
+// Command translator is the CLI entrypoint for book-translator.
 package main
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/tikhomirovv/book-translater/internal/interfaces/cli"
+	"github.com/tikhomirovv/book-translator/internal/interfaces/cli"
 )
 
 func main() {

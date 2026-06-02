@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tikhomirovv/book-translater/internal/infrastructure/config"
+	"github.com/tikhomirovv/book-translator/internal/infrastructure/config"
 )
 
 func TestLoadFromRepoConfigs(t *testing.T) {

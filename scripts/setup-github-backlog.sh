@@ -2,9 +2,9 @@
 # One-time setup: labels, milestones, issues, dependencies, project board.
 set -euo pipefail
 
-REPO="tikhomirovv/book-translater"
+REPO="tikhomirovv/book-translator"
 OWNER="tikhomirovv"
-NAME="book-translater"
+NAME="book-translator"
 
 echo "==> Labels"
 for spec in \
@@ -378,7 +378,7 @@ V02_4=$n
 block "$V02_4" "$POLISH"
 
 echo "==> GitHub Project"
-PROJ=$(gh project create --owner "@me" --title "book-translater" --format json)
+PROJ=$(gh project create --owner "@me" --title "book-translator" --format json)
 PROJ_NUM=$(echo "$PROJ" | python3 -c "import sys,json; print(json.load(sys.stdin)['number'])")
 PROJ_ID=$(echo "$PROJ" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
 echo "Project #$PROJ_NUM id=$PROJ_ID"

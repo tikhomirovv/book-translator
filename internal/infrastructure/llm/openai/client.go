@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tikhomirovv/book-translater/internal/domain/ports"
+	"github.com/tikhomirovv/book-translator/internal/domain/ports"
 )
 
 const defaultBaseURL = "https://api.openai.com/v1"

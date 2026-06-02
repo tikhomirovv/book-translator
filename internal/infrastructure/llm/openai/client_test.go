@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/tikhomirovv/book-translater/internal/domain/ports"
-	"github.com/tikhomirovv/book-translater/internal/infrastructure/llm/openai"
+	"github.com/tikhomirovv/book-translator/internal/domain/ports"
+	"github.com/tikhomirovv/book-translator/internal/infrastructure/llm/openai"
 )
 
 func TestClient_Chat_success(t *testing.T) {

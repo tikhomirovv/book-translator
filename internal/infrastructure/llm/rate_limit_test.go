@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tikhomirovv/book-translater/internal/domain/ports"
-	llminfra "github.com/tikhomirovv/book-translater/internal/infrastructure/llm"
+	"github.com/tikhomirovv/book-translator/internal/domain/ports"
+	llminfra "github.com/tikhomirovv/book-translator/internal/infrastructure/llm"
 )
 
 func TestRateLimitedLLM_delay(t *testing.T) {

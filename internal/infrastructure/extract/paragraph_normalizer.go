@@ -3,7 +3,7 @@ package extract
 import (
 	"strings"
 
-	"github.com/tikhomirovv/book-translater/internal/domain"
+	"github.com/tikhomirovv/book-translator/internal/domain"
 )
 
 // NormalizeParagraphs splits raw text on blank lines and returns indexed paragraphs.

@@ -3,8 +3,8 @@ package contextmgr
 import (
 	"fmt"
 
-	"github.com/tikhomirovv/book-translater/internal/domain"
-	"github.com/tikhomirovv/book-translater/internal/domain/ports"
+	"github.com/tikhomirovv/book-translator/internal/domain"
+	"github.com/tikhomirovv/book-translator/internal/domain/ports"
 )
 
 // NewContextManager selects an implementation by strategy name.

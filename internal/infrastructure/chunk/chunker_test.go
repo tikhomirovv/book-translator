@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/tikhomirovv/book-translater/internal/domain"
-	"github.com/tikhomirovv/book-translater/internal/infrastructure/chunk"
+	"github.com/tikhomirovv/book-translator/internal/domain"
+	"github.com/tikhomirovv/book-translator/internal/infrastructure/chunk"
 )
 
 func TestBuildChunks_overlap(t *testing.T) {

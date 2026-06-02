@@ -29,7 +29,7 @@ func Load(configDir string) (*Config, error) {
 	v.SetConfigName("config.local")
 	_ = v.MergeInConfig()
 
-	v.SetEnvPrefix("BOOK_TRANSLATER")
+	v.SetEnvPrefix("BOOK_TRANSLATOR")
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
@@ -44,11 +44,11 @@ func Load(configDir string) (*Config, error) {
 
 	cfg.OpenAIAPIKey = firstNonEmpty(
 		v.GetString("openai_api_key"),
-		v.GetString("BOOK_TRANSLATER_OPENAI_API_KEY"),
+		v.GetString("BOOK_TRANSLATOR_OPENAI_API_KEY"),
 	)
 	cfg.OpenAIBaseURL = firstNonEmpty(
 		v.GetString("openai_base_url"),
-		v.GetString("BOOK_TRANSLATER_OPENAI_BASE_URL"),
+		v.GetString("BOOK_TRANSLATOR_OPENAI_BASE_URL"),
 		"https://api.openai.com/v1",
 	)
 

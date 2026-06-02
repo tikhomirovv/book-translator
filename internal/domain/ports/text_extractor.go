@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"github.com/tikhomirovv/book-translater/internal/domain"
+	"github.com/tikhomirovv/book-translator/internal/domain"
 )
 
 // TextExtractor reads a source file into normalized paragraphs.

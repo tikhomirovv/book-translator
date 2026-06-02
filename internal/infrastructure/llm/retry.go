@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tikhomirovv/book-translater/internal/domain/ports"
+	"github.com/tikhomirovv/book-translator/internal/domain/ports"
 )
 
 // RetryLLM retries transient failures with exponential backoff.

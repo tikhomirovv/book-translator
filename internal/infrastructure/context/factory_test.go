@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/tikhomirovv/book-translater/internal/domain"
-	contextmgr "github.com/tikhomirovv/book-translater/internal/infrastructure/context"
-	"github.com/tikhomirovv/book-translater/internal/infrastructure/store"
+	"github.com/tikhomirovv/book-translator/internal/domain"
+	contextmgr "github.com/tikhomirovv/book-translator/internal/infrastructure/context"
+	"github.com/tikhomirovv/book-translator/internal/infrastructure/store"
 )
 
 func TestNewContextManager_unknownStrategy(t *testing.T) {

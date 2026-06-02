@@ -12,7 +12,7 @@ Product and technical docs: [`.docs/`](.docs/)
 
 ## Status
 
-MVP in development. See [GitHub Issues](https://github.com/tikhomirovv/book-translater/issues) and [Project board](https://github.com/users/tikhomirovv/projects/4).
+MVP in development. See [GitHub Issues](https://github.com/tikhomirovv/book-translator/issues) and [Project board](https://github.com/users/tikhomirovv/projects/4).
 
 ## Quick start (dev)
 

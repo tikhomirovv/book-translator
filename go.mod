@@ -1,4 +1,4 @@
-module github.com/tikhomirovv/book-translater
+module github.com/tikhomirovv/book-translator
 
 go 1.24.1
 

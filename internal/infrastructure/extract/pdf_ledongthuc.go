@@ -9,8 +9,8 @@ import (
 
 	"github.com/ledongthuc/pdf"
 
-	"github.com/tikhomirovv/book-translater/internal/domain"
-	"github.com/tikhomirovv/book-translater/internal/domain/ports"
+	"github.com/tikhomirovv/book-translator/internal/domain"
+	"github.com/tikhomirovv/book-translator/internal/domain/ports"
 )
 
 // plainTextReader loads raw text from a PDF path (overridable in tests).

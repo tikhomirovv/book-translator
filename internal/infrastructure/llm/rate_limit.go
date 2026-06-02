@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/tikhomirovv/book-translater/internal/domain/ports"
+	"github.com/tikhomirovv/book-translator/internal/domain/ports"
 )
 
 // RateLimitedLLM waits before each request to respect a simple delay limit.

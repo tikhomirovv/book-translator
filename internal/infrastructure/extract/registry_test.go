@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tikhomirovv/book-translater/internal/domain"
-	"github.com/tikhomirovv/book-translater/internal/infrastructure/extract"
+	"github.com/tikhomirovv/book-translator/internal/domain"
+	"github.com/tikhomirovv/book-translator/internal/infrastructure/extract"
 )
 
 func TestRegistry_ExtractPDF_mocked(t *testing.T) {
