@@ -13,18 +13,56 @@ For issue selection rules and dependency graphs, see the `github-project-ops` sk
 
 You are the implementer:
 
-- Read context, pick or accept one issue, implement it on a **dedicated branch**.
+- Read context, pick or accept **one issue at a time**, implement it on a **dedicated branch** (`issue/<N>-<slug>`).
 - Ask **only blocking questions** — things you cannot infer from docs, the issue, or the codebase.
 - Stop and notify the user when work is **done** or **paused** (blocked, scope change, or awaiting human input).
 - Leave **brief issue comments** at key stages so progress is visible in GitHub, not only in chat.
-- End with a **pull request** — never merge unless the user explicitly asks.
+- End with a **pull request** (`Closes #N`). Then follow the **merge policy** (below) before starting the next issue.
 
 Do not reorganize the backlog, create new milestones, or rewrite `.docs/` unless the issue requires it.
+
+## Sequential execution (default)
+
+When the user asks to implement tasks **in order**, **one after another**, **sequentially**, or does not specify batching — use this loop for **each** issue:
+
+```
+issue #N → branch issue/N-slug → implement → test → PR → merge & close #N → update main → issue #N+1
+```
+
+**Rules:**
+
+| Rule | Requirement |
+|------|-------------|
+| One issue | Exactly **one** issue per branch and per PR (`Closes #N` for a single N). |
+| Branch base | Always branch from **updated `main`** (or default branch) after the previous issue is merged. |
+| Next issue | Start issue #N+1 only when #N is **merged** and closed (or user explicitly overrides). |
+| No batching | Do **not** combine multiple issues in one branch/PR unless the user **explicitly** asks (e.g. «в одном PR», «батчем»). |
+| Dependencies | Never start an issue whose `blocked_by` issues are still open (see `github-project-ops`). |
+
+**Anti-pattern:** `issue/1-4-foundation` with `Closes #1, #2, #3, #4` — only when the user explicitly requested a batch.
+
+## Merge policy (ask if unclear)
+
+At the **start** of an implementation session (before the first issue), if the user has **not** said whether to merge automatically, **ask once**:
+
+> После каждого PR: **(A)** мержить автоматически и сразу брать следующую задачу, или **(B)** остановиться и ждать вашего ревью?
+
+| Mode | Behavior after PR is opened and CI is green |
+|------|---------------------------------------------|
+| **A — auto-merge** | `gh pr merge` (use repo default: merge/squash as appropriate), `git checkout main && git pull`, then continue to the next issue in the same session. |
+| **B — wait for review** (default if user does not choose) | Stop. Notify user with PR link. Do **not** merge. Do **not** start the next issue until the user merges or asks to continue. |
+
+If the user already stated their preference in the current conversation, do not ask again.
+
+**Explicit overrides:**
+
+- User says «мержи сам», «auto-merge», «не жди ревью» → mode A for this session.
+- User says «жди ревью», «не мержи», «stop after PR» → mode B.
 
 ## Workflow Overview
 
 ```
-Orient → Select issue → Branch → Implement → Verify → Notify → Pull request
+Orient → Merge policy? → Select ONE issue → Branch from main → Implement → Verify → PR → Merge gate → (next issue)
 ```
 
 Track progress with this checklist:
@@ -39,7 +77,9 @@ Track progress with this checklist:
 - [ ] `docker build` passes locally **or** CI docker job green after push
 - [ ] Key stages commented on the issue (see below)
 - [ ] User notified (done or paused)
-- [ ] Pull request opened (when implementation is complete)
+- [ ] Pull request opened (when implementation is complete; `Closes #N` — single issue)
+- [ ] Merge policy applied (merged + main pulled, or stopped for user review)
+- [ ] Only then: next issue (if sequential run continues)
 ```
 
 ## Step 1 — Orient
@@ -74,9 +114,9 @@ Discover listing/filter syntax via `gh issue list --help` at runtime.
 **Always** create a new branch before implementation. Never commit implementation work directly on `main` / `master`.
 
 1. Ensure a clean working tree (or stash only with user awareness).
-2. Branch from the default branch (`main` or `master`).
-3. Naming: `issue/<number>-<short-slug>` — e.g. `issue/1-scaffold-monorepo`.
-4. Check out the branch; all commits for this issue stay here.
+2. Branch from the default branch (`main` or `master`) — **must be up to date** (previous issue merged and `git pull` done when working sequentially).
+3. Naming: `issue/<number>-<short-slug>` — e.g. `issue/1-scaffold-monorepo` (**one issue number per branch**).
+4. Check out the branch; **all** commits for **this issue only** stay here.
 
 ```bash
 git fetch origin
@@ -203,7 +243,7 @@ Always stop and report when implementation is **complete** or **paused**. Mirror
 
 When implementation is complete and tests pass, **notify the user and open the PR in the same session** — the PR is the handoff artifact for review.
 
-## Step 7 — Pull Request
+## Step 7 — Pull Request & merge gate
 
 Open a PR as soon as implementation is complete and tests pass. Do not leave work only on a branch without a PR unless paused or blocked.
 
@@ -220,6 +260,8 @@ PR body should include:
 ## Issue
 Closes #N
 
+<!-- Exactly one issue per PR unless user explicitly requested a batch. -->
+
 ## Test plan
 - [ ] `go test ./...`
 - [ ] [manual steps if relevant]
@@ -230,20 +272,27 @@ Closes #N
 
 Link the issue with `Closes #N` (or `Fixes #N`) so it auto-closes on merge.
 
-**Do not merge** unless the user explicitly requests it. The user reviews, runs tests, and may request changes.
+### After PR
+
+1. Report CI status.
+2. Apply **merge policy** (see above):
+   - **Mode A:** merge PR, `git checkout main && git pull --ff-only`, comment on issue if helpful, proceed to next issue.
+   - **Mode B:** stop; tell user the PR is ready for review; do not start the next issue.
 
 ## Boundaries
 
 | Do | Don't |
 |----|-------|
-| Implement one issue per branch/PR | Reorganize milestones, labels, or backlog |
+| **One issue** per branch and per PR | Pack multiple issues into one PR without explicit user request |
+| Work **sequentially** from updated `main` when user asks for ordered execution | Start #N+1 before #N is merged (unless user overrides) |
+| Ask **merge policy** once per session if not specified | Assume auto-merge or assume wait-for-review without asking |
 | Read `.docs/` before coding | Store long-term requirements only in issues |
 | Respect issue dependencies | Start blocked issues without override |
 | Ask minimal blocking questions | Ask preference questions already answered in docs |
-| Add tests with feature code | Defer tests to a later PR |
+| Add tests with feature code | Defer tests to a follow-up PR |
 | Comment on issue at key stages | Dump verbose play-by-play on every commit |
-| Open PR at the end | Merge your own PR unless asked |
-| Commit on feature branch | Commit directly to main/master |
+| Merge only in **mode A** or when user explicitly asks | Merge silently in mode B |
+| Commit on feature branch | Commit directly on main/master |
 
 ## Related Skills
 

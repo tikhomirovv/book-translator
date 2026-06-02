@@ -25,10 +25,12 @@ For command syntax, use `gh <command> --help` or `gh help <command>`. Do not rel
 
 ## Typical Workflow
 
-1. **Plan** — break work from PRD or discussion into issues. Group related issues under a milestone.
-2. **Track** — add issues to a Project for board/roadmap views. Update status as work progresses.
-3. **Implement** — branch, commit, open a PR referencing the issue (`Fixes #N` or `Closes #N`).
-4. **Close** — merge PR, verify linked issues close, update Project status.
+1. **Plan** — break work from PRD or discussion into issues (see **Decomposition** below). Group under a milestone. Set **dependencies** and **priority** labels.
+2. **Track** — create/link a GitHub Project; add all milestone issues to the board.
+3. **Implement** — hand off to `github-issue-implementer`: **one issue → one branch → one PR → merge → next** (unless user requests a batch).
+4. **Close** — merge PR closes the issue (`Closes #N`). Verify board status.
+
+**Handoff to implementer:** After planning, the implementer works issues in dependency order, one at a time. Do not plan issues so small that the implementer is forced to batch them (see semantic sizing).
 
 ## When to Use What
 
@@ -40,13 +42,44 @@ Start simple. Add Projects when milestones and labels are no longer enough.
 
 ## Decomposition Guidelines
 
-When breaking down work:
+When breaking down work from PRD, technical design, or discussion:
 
-- One issue = one deliverable or one clearly bounded task.
-- Write acceptance criteria in the issue body.
-- **Set native issue dependencies** for every issue that cannot start until another is done (see below).
-- Use milestones for phase boundaries, not for every small task.
-- Prefer fewer, well-scoped issues over many vague ones.
+### Semantic size (minimum meaningful deliverable)
+
+Each issue must be a **complete, reviewable unit of value** — not a fragment that only makes sense together with the next 2–3 issues.
+
+| Good | Bad |
+|------|-----|
+| «Domain entities + port interfaces» — compiles, testable | «Empty scaffold» without module/layout that can build |
+| «Viper config loader + config.yaml + tests» | «Create config.yaml» separate from «wire Viper» when both are useless alone |
+| «PDF extract + chunker pipeline» — one vertical slice | Splitting «add go.mod» / «add domain folder» / «add empty main» as three issues |
+
+**Rule:** If issue A is not worth merging on its own (broken build, no testable behavior, pure placeholder), either **merge A+B into one issue** or make B explicitly blocked by A and ensure A still leaves the repo in a valid state (builds, tests pass).
+
+**Corollary:** Prefer **fewer, thicker** issues over **many micro** issues. Target: one PR ≈ one coherent change a reviewer can understand in 15–30 minutes.
+
+### Issue checklist (every new issue)
+
+- [ ] **Title** — verb + scope (e.g. «Infrastructure: filesystem TranslationStore»).
+- [ ] **Acceptance criteria** — concrete checkboxes; no vague «implement X».
+- [ ] **Milestone** — phase (e.g. MVP, v0.2).
+- [ ] **Labels** — `type:*`, `area:*`, and **`priority:p0`** (MVP/critical) or **`priority:p1`** (later).
+- [ ] **Dependencies** — native `blocked by` links for every prerequisite (required, not optional).
+- [ ] **Depends on** section in body (optional, for humans) — list `#N` titles; native links are source of truth.
+
+### Structural rules
+
+- One issue = **one deliverable** shippable in **one PR** (aligns with `github-issue-implementer`).
+- Use milestones for **phase boundaries**, not for every tiny task.
+- Parallel work is OK when dependencies allow (e.g. #5 and #6 both blocked only by #3) — express that in the dependency graph, not by skipping links.
+- **Do not** create a batch issue unless the user asked for a single PR covering multiple deliverables.
+
+### After creating issues
+
+1. **Verify dependency graph** — no orphan order; entry issue(s) have no blockers.
+2. **Link repository to Project** — `gh project link <N> --owner OWNER --repo OWNER/REPO` so the board appears under the repo’s Projects tab.
+3. **Add issues to Project** — `gh project item-add` for each issue URL.
+4. Optionally provide a short **execution order table** in chat or a tracking issue (like the reference tables below).
 
 ## Issue Dependencies (required)
 
@@ -98,11 +131,38 @@ Important:
 
 - **Root tasks** (e.g. repo scaffold) have no blockers.
 - **Infrastructure** (CI, lint) may depend only on scaffold — can run in parallel with domain work once scaffold exists.
-- **Domain layers** follow technical design order: schema → persistence → services → adapters → integration/polish.
-- **Cross-cutting features** (billing, Telegram UI) depend on the core pieces they integrate with, not the reverse.
+- **Domain layers** follow technical design order: ports/entities → persistence → use cases → adapters → CLI/integration → polish.
+- **Cross-cutting features** depend on the core they integrate with, not the reverse.
 - **Next milestone / phase** issues should be blocked by the **last deliverable of the previous phase** (or by all critical path items if parallel entry is unsafe).
+- **Priority:** mark MVP/critical path issues `priority:p0`; deferrable work `priority:p1`. Implementer picks `p0` before `p1` among unblocked issues.
 
-### EasyTerms execution order (reference)
+### book-translater execution order (reference)
+
+MVP (`MVP — CLI Book Translator`):
+
+| Issue | Blocked by | Notes |
+|-------|------------|-------|
+| #1 Scaffold | — | Start here |
+| #2 CI | #1 | |
+| #3 Domain ports | #1 | Parallel with #2, #4 after #1 |
+| #4 Config | #1 | |
+| #5 TranslationStore | #3 | |
+| #6 PDF + chunker | #3 | |
+| #7 LLM adapter | #3, #4 | |
+| #8 ContextManager | #3, #5 | |
+| #9 PromptRenderer | #4 | |
+| #10 Process chunk | #6, #7, #8, #9 | |
+| #11 Start + Markdown | #10, #5 | |
+| #12 resume/status/list | #10, #5 | |
+| #13 CLI | #11, #12 | |
+| #14 Integration tests | #13 | |
+| #15 MVP polish | #14 | Last MVP |
+
+v0.2 (`v0.2 — Context & Formats`): #16–#19 blocked by #15.
+
+Update this table when the backlog changes.
+
+### EasyTerms execution order (reference — other project)
 
 MVP (`MVP — Working Bot`):
 
@@ -152,3 +212,10 @@ Tell the user which permission or scope is likely missing and how to fix it. Do 
 - Do not store product requirements or technical decisions in GitHub issues long-term — keep `.docs/` as source of truth; issues reference and implement that context.
 - Do not embed a full `gh` command reference in responses — discover commands via CLI help.
 - Do not create markdown roadmaps that duplicate GitHub milestones or Projects unless the user explicitly asks.
+- Do not create micro-issues that force the implementer to batch work — size issues for **one PR each**.
+- Do not skip `blocked by` links when creating issues — planning is incomplete without the dependency graph.
+
+## Related Skills
+
+- **`github-issue-implementer`** — sequential execution: one issue, one branch, one PR, merge gate, then next
+- **`project-docs`** — product and technical source of truth in `.docs/`
