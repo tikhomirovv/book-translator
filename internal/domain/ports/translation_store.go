@@ -24,6 +24,8 @@ type TranslationStore interface {
 	Load(ctx context.Context, id string) (*domain.TranslationState, *domain.Translation, error)
 	SaveState(ctx context.Context, id string, state *domain.TranslationState) error
 	SaveChunk(ctx context.Context, id string, chunk domain.Chunk) error
+	LoadTranslatedChunks(ctx context.Context, id string) ([]domain.Chunk, error)
+	WriteOutput(ctx context.Context, t *domain.Translation, markdown string) error
 	UpdateTranslation(ctx context.Context, t *domain.Translation) error
 	List(ctx context.Context) ([]TranslationSummary, error)
 }

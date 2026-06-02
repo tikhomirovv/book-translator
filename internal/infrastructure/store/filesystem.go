@@ -185,6 +185,78 @@ func (s *FilesystemStore) SaveChunk(ctx context.Context, id string, chunk domain
 	return os.WriteFile(filepath.Join(chunksDir, name), []byte(content), 0o644)
 }
 
+// LoadTranslatedChunks reads saved chunk files in index order.
+func (s *FilesystemStore) LoadTranslatedChunks(ctx context.Context, id string) ([]domain.Chunk, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if id == "" {
+		return nil, domain.ErrInvalidInput
+	}
+
+	chunksDir := filepath.Join(s.translationDir(id), "chunks")
+	entries, err := os.ReadDir(chunksDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var chunks []domain.Chunk
+	for _, ent := range entries {
+		if ent.IsDir() || !strings.HasSuffix(ent.Name(), ".md") {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(chunksDir, ent.Name()))
+		if err != nil {
+			return nil, err
+		}
+		chunk, err := decodeChunkMarkdown(string(data))
+		if err != nil {
+			return nil, fmt.Errorf("decode %s: %w", ent.Name(), err)
+		}
+		chunks = append(chunks, chunk)
+	}
+
+	sort.Slice(chunks, func(i, j int) bool {
+		return chunks[i].Index < chunks[j].Index
+	})
+	return chunks, nil
+}
+
+// WriteOutput writes final Markdown to the user path and translations/<id>/output.md.
+func (s *FilesystemStore) WriteOutput(ctx context.Context, t *domain.Translation, markdown string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if t == nil || t.ID == "" {
+		return domain.ErrInvalidInput
+	}
+
+	dir := s.translationDir(t.ID)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return domain.ErrNotFound
+	} else if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(filepath.Join(dir, "output.md"), []byte(markdown), 0o644); err != nil {
+		return err
+	}
+	if t.OutputPath == "" {
+		return nil
+	}
+
+	outDir := filepath.Dir(t.OutputPath)
+	if outDir != "." && outDir != "" {
+		if err := os.MkdirAll(outDir, 0o755); err != nil {
+			return err
+		}
+	}
+	return os.WriteFile(t.OutputPath, []byte(markdown), 0o644)
+}
+
 // UpdateTranslation updates source.meta.json.
 func (s *FilesystemStore) UpdateTranslation(ctx context.Context, t *domain.Translation) error {
 	if err := ctx.Err(); err != nil {
@@ -400,4 +472,45 @@ func encodeChunkMarkdown(chunk domain.Chunk) (string, error) {
 		b.WriteByte('\n')
 	}
 	return b.String(), nil
+}
+
+func decodeChunkMarkdown(content string) (domain.Chunk, error) {
+	const delim = "---"
+	if !strings.HasPrefix(content, delim) {
+		return domain.Chunk{}, fmt.Errorf("%w: missing frontmatter", domain.ErrInvalidInput)
+	}
+
+	rest := content[len(delim):]
+	end := strings.Index(rest, "\n"+delim+"\n")
+	if end < 0 {
+		return domain.Chunk{}, fmt.Errorf("%w: missing frontmatter end", domain.ErrInvalidInput)
+	}
+
+	body := rest[end+len("\n"+delim+"\n"):]
+	meta := rest[:end]
+	var chunk domain.Chunk
+	for _, line := range strings.Split(meta, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+		switch key {
+		case "index":
+			fmt.Sscanf(val, "%d", &chunk.Index)
+		case "paragraph_start":
+			fmt.Sscanf(val, "%d", &chunk.ParagraphStart)
+		case "paragraph_end":
+			fmt.Sscanf(val, "%d", &chunk.ParagraphEnd)
+		case "overlap_from_prev":
+			chunk.OverlapFromPrev = strings.Trim(val, `"`)
+		}
+	}
+	chunk.TranslatedText = body
+	return chunk, nil
 }
