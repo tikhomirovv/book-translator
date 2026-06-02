@@ -21,6 +21,7 @@ type ResumeTranslation struct {
 	Overlap      int
 	Model        string
 	Provider     string
+	OnProgress   func(completed, total int)
 }
 
 // ResumeTranslationRequest identifies the job to resume.
@@ -85,6 +86,9 @@ func (uc *ResumeTranslation) Execute(ctx context.Context, req ResumeTranslationR
 			_ = uc.Store.SaveState(ctx, tr.ID, state)
 			_ = uc.Store.UpdateTranslation(ctx, tr)
 			return fmt.Errorf("process chunk %d: %w", ch.Index, err)
+		}
+		if uc.OnProgress != nil {
+			uc.OnProgress(ch.Index, len(chunks))
 		}
 	}
 
