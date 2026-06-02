@@ -24,6 +24,8 @@ type FilesystemStore struct {
 	baseDir string
 }
 
+var _ ports.TranslationStore = (*FilesystemStore)(nil)
+
 // NewFilesystemStore creates a store rooted at baseDir (defaults to "translations").
 func NewFilesystemStore(baseDir string) *FilesystemStore {
 	if baseDir == "" {
