@@ -31,6 +31,7 @@ type StartTranslation struct {
 	DefaultPromptType string
 	Model             string
 	Provider          string
+	OnProgress        func(completed, total int)
 }
 
 // StartTranslationRequest starts a new translation job.
@@ -120,6 +121,9 @@ func (uc *StartTranslation) Execute(ctx context.Context, req StartTranslationReq
 			tr.Status = domain.StatusFailed
 			_ = uc.Store.UpdateTranslation(ctx, tr)
 			return nil, fmt.Errorf("process chunk %d: %w", ch.Index, err)
+		}
+		if uc.OnProgress != nil {
+			uc.OnProgress(ch.Index, len(chunks))
 		}
 	}
 
