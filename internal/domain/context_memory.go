@@ -30,5 +30,6 @@ type TranslationState struct {
 	TotalChunks        int
 	Glossary           map[string]any
 	ContextSummary     string
+	LastError          string
 	Usage              Usage
 }
