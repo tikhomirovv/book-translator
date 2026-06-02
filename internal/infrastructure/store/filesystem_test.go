@@ -138,6 +138,41 @@ func TestFilesystemStore_CreateDuplicate(t *testing.T) {
 	}
 }
 
+func TestFilesystemStore_LoadTranslatedChunks(t *testing.T) {
+	t.Parallel()
+
+	base := t.TempDir()
+	s := store.NewFilesystemStore(base)
+	ctx := context.Background()
+
+	tr := domain.NewTranslation("", "/a.pdf", "/b.md", "ru", "nonfiction")
+	if err := s.Create(ctx, tr); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, text := range []string{"one", "two"} {
+		if err := s.SaveChunk(ctx, tr.ID, domain.Chunk{
+			Index:          i + 1,
+			ParagraphStart: i,
+			ParagraphEnd:   i + 1,
+			TranslatedText: text,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	chunks, err := s.LoadTranslatedChunks(ctx, tr.ID)
+	if err != nil {
+		t.Fatalf("LoadTranslatedChunks: %v", err)
+	}
+	if len(chunks) != 2 {
+		t.Fatalf("chunks = %d, want 2", len(chunks))
+	}
+	if chunks[0].TranslatedText != "one\n" && chunks[0].TranslatedText != "one" {
+		t.Fatalf("chunk 1 text = %q", chunks[0].TranslatedText)
+	}
+}
+
 func TestNewTranslationID_IsUUIDv4(t *testing.T) {
 	t.Parallel()
 
