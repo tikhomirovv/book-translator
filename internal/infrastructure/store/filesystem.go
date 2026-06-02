@@ -389,6 +389,7 @@ type stateFile struct {
 	TotalChunks        int            `json:"total_chunks"`
 	Glossary           map[string]any `json:"glossary"`
 	ContextSummary     string         `json:"context_summary"`
+	LastError          string         `json:"last_error,omitempty"`
 	Usage              usageFile      `json:"usage"`
 }
 
@@ -409,6 +410,7 @@ func stateFileFromDomain(state *domain.TranslationState) stateFile {
 		TotalChunks:        state.TotalChunks,
 		Glossary:           state.Glossary,
 		ContextSummary:     state.ContextSummary,
+		LastError:          state.LastError,
 		Usage: usageFile{
 			PromptTokens:     state.Usage.PromptTokens,
 			CompletionTokens: state.Usage.CompletionTokens,
@@ -429,6 +431,7 @@ func (sf stateFile) toDomain() *domain.TranslationState {
 		TotalChunks:        sf.TotalChunks,
 		Glossary:           glossary,
 		ContextSummary:     sf.ContextSummary,
+		LastError:          sf.LastError,
 		Usage: domain.Usage{
 			PromptTokens:     sf.Usage.PromptTokens,
 			CompletionTokens: sf.Usage.CompletionTokens,

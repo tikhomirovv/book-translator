@@ -112,6 +112,11 @@ func (uc *StartTranslation) Execute(ctx context.Context, req StartTranslationReq
 			TargetLang:    req.TargetLang,
 			Chunk:         ch,
 		}); err != nil {
+			state, _, loadErr := uc.Store.Load(ctx, tr.ID)
+			if loadErr == nil {
+				state.LastError = err.Error()
+				_ = uc.Store.SaveState(ctx, tr.ID, state)
+			}
 			tr.Status = domain.StatusFailed
 			_ = uc.Store.UpdateTranslation(ctx, tr)
 			return nil, fmt.Errorf("process chunk %d: %w", ch.Index, err)
