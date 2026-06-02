@@ -1,0 +1,27 @@
+# Binaries
+/bin/
+/dist/
+*.exe
+
+# Go
+/vendor/
+
+# Env & local config
+.env
+config.local.yaml
+configs/config.local.yaml
+
+# Runtime translation data
+/translations/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Test
+coverage.out
+*.test
