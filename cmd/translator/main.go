@@ -85,7 +85,6 @@ func main() {
 		ParagraphTo:       cfg.Translation.ParagraphTo,
 		DefaultPromptType: "nonfiction",
 		Model:             cfg.LLM.Translation.Model,
-		Provider:          "openai",
 		LogDebug: func(msg string, kv ...any) {
 			ev := logger.Debug()
 			for i := 0; i+1 < len(kv); i += 2 {
@@ -107,7 +106,6 @@ func main() {
 		ParagraphFrom: cfg.Translation.ParagraphFrom,
 		ParagraphTo:   cfg.Translation.ParagraphTo,
 		Model:         cfg.LLM.Translation.Model,
-		Provider:     "openai",
 	}
 
 	cli.SetApp(&cli.App{

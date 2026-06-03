@@ -23,7 +23,6 @@ type ResumeTranslation struct {
 	ParagraphFrom int
 	ParagraphTo   int
 	Model        string
-	Provider     string
 	OnProgress   func(completed, total int)
 }
 
@@ -114,7 +113,6 @@ func (uc *ResumeTranslation) Execute(ctx context.Context, req ResumeTranslationR
 	if err := uc.Finalize.Execute(ctx, translate.FinalizeTranslationRequest{
 		TranslationID: tr.ID,
 		Model:         uc.Model,
-		Provider:      uc.Provider,
 	}); err != nil {
 		return fmt.Errorf("finalize translation: %w", err)
 	}

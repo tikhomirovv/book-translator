@@ -110,7 +110,7 @@ Extracted source paragraphs are also saved as `translations/<uuid>/source.extrac
 The output Markdown file includes YAML frontmatter:
 
 - `target_lang`, `date`, `model`, `translation_id`
-- Token usage (`prompt_tokens`, `completion_tokens`, `total_tokens`)
+- Token usage (`input_tokens`, `output_tokens`, `total_tokens`) — cumulative across all LLM calls (translation + context) for the job
 
 The body is the concatenated translated chunks.
 

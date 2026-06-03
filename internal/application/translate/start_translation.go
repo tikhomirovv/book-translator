@@ -33,7 +33,6 @@ type StartTranslation struct {
 	ParagraphTo       int
 	DefaultPromptType string
 	Model             string
-	Provider          string
 	OnProgress        func(completed, total int)
 	LogDebug          func(msg string, kv ...any)
 }
@@ -155,7 +154,6 @@ func (uc *StartTranslation) Execute(ctx context.Context, req StartTranslationReq
 	if err := uc.Finalize.Execute(ctx, FinalizeTranslationRequest{
 		TranslationID: tr.ID,
 		Model:         uc.Model,
-		Provider:      uc.Provider,
 	}); err != nil {
 		return nil, fmt.Errorf("finalize translation: %w", err)
 	}

@@ -202,7 +202,6 @@ func newTestStack(t *testing.T) *testStack {
 		ParagraphTo:       -1,
 		DefaultPromptType: "nonfiction",
 		Model:             "mock",
-		Provider:          "mock",
 	}
 
 	resumeUC := &resume.ResumeTranslation{
@@ -217,7 +216,6 @@ func newTestStack(t *testing.T) *testStack {
 		ParagraphFrom: -1,
 		ParagraphTo:   -1,
 		Model:        "mock",
-		Provider:     "mock",
 	}
 
 	return &testStack{

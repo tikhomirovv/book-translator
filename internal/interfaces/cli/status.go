@@ -46,7 +46,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	fmt.Fprintf(w, "Target lang\t%s\n", view.TargetLang)
 	fmt.Fprintf(w, "Status\t%s\n", view.Status)
 	fmt.Fprintf(w, "Progress\t%d/%d\n", view.CompletedChunks, view.TotalChunks)
-	fmt.Fprintf(w, "Tokens\t%d (prompt %d, completion %d)\n",
+	fmt.Fprintf(w, "Tokens\t%d (input %d, output %d)\n",
 		view.Usage.TotalTokens, view.Usage.PromptTokens, view.Usage.CompletionTokens)
 	if view.LastError != "" {
 		fmt.Fprintf(w, "Last error\t%s\n", view.LastError)
