@@ -7,6 +7,7 @@ import (
 	"github.com/tikhomirovv/book-translator/internal/application/translate"
 	"github.com/tikhomirovv/book-translator/internal/domain"
 	"github.com/tikhomirovv/book-translator/internal/domain/ports"
+	chunkinfra "github.com/tikhomirovv/book-translator/internal/infrastructure/chunk"
 )
 
 // ResumeTranslation continues an interrupted translation idempotently.
@@ -19,6 +20,8 @@ type ResumeTranslation struct {
 	BuildChunks  translate.ChunkSplitter
 	ChunkSize    int
 	Overlap      int
+	ParagraphFrom int
+	ParagraphTo   int
 	Model        string
 	Provider     string
 	OnProgress   func(completed, total int)
@@ -49,6 +52,13 @@ func (uc *ResumeTranslation) Execute(ctx context.Context, req ResumeTranslationR
 	paragraphs, err := uc.Extractor.Extract(ctx, tr.SourcePath)
 	if err != nil {
 		return fmt.Errorf("extract text: %w", err)
+	}
+	paragraphs = chunkinfra.FilterParagraphs(paragraphs, chunkinfra.ParagraphRange{
+		From: uc.ParagraphFrom,
+		To:   uc.ParagraphTo,
+	})
+	if len(paragraphs) == 0 {
+		return fmt.Errorf("%w: no paragraphs in configured range", domain.ErrInvalidInput)
 	}
 	chunks := uc.BuildChunks(paragraphs, uc.ChunkSize, uc.Overlap)
 	if len(chunks) == 0 {

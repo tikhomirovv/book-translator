@@ -2,13 +2,14 @@ package config
 
 // Config holds application settings loaded from YAML and env.
 type Config struct {
-	Chunk          ChunkConfig            `mapstructure:"chunk"`
-	Context        ContextConfig          `mapstructure:"context"`
-	LLM            LLMConfig              `mapstructure:"llm"`
-	RequestDelayMs int                    `mapstructure:"request_delay_ms"`
-	AllowedLanguages []string             `mapstructure:"allowed_languages"`
-	LogLevel         string               `mapstructure:"log_level"`
-	Prompts        map[string]PromptSet   `mapstructure:"prompts"`
+	Chunk            ChunkConfig            `mapstructure:"chunk"`
+	Context          ContextConfig          `mapstructure:"context"`
+	LLM              LLMConfig              `mapstructure:"llm"`
+	Translation      TranslationConfig      `mapstructure:"translation"`
+	RequestDelayMs   int                    `mapstructure:"request_delay_ms"`
+	AllowedLanguages []string               `mapstructure:"allowed_languages"`
+	LogLevel         string                 `mapstructure:"log_level"`
+	Prompts          map[string]PromptSet   `mapstructure:"prompts"`
 	// Secrets from env (not in yaml)
 	OpenAIAPIKey  string `mapstructure:"-"`
 	OpenAIBaseURL string `mapstructure:"-"`
@@ -31,6 +32,18 @@ type LLMConfig struct {
 	Model       string  `mapstructure:"model"`
 	Temperature float64 `mapstructure:"temperature"`
 	MaxTokens   int     `mapstructure:"max_tokens"`
+}
+
+// TranslationConfig controls optional dev/test limits on the translation pipeline.
+type TranslationConfig struct {
+	// ParagraphFrom/To filter source paragraphs by Index (inclusive). -1 = no bound.
+	ParagraphFrom int `mapstructure:"paragraph_from"`
+	ParagraphTo   int `mapstructure:"paragraph_to"`
+}
+
+// ParagraphRange returns the configured paragraph filter for chunking.
+func (c TranslationConfig) ParagraphRange() (from, to int) {
+	return c.ParagraphFrom, c.ParagraphTo
 }
 
 // PromptSet holds templates for one prompt-type id.

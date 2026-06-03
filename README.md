@@ -35,6 +35,16 @@ make test
 
 Allowed target languages are listed in `configs/config.yaml` under `allowed_languages`.
 
+To translate only part of a book while tuning prompts (cheap iteration), set in `config.local.yaml`:
+
+```yaml
+translation:
+  paragraph_from: 30   # inclusive, 0-based paragraph index
+  paragraph_to: 70       # inclusive; use -1 for open end
+```
+
+Leave both at `-1` (default) for a full-book run.
+
 ## Usage
 
 ### Translate a new book (flags)

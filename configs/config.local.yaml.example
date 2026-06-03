@@ -3,5 +3,9 @@
 # chunk:
 #   size_paragraphs: 5
 #
+# translation:
+#   paragraph_from: 30
+#   paragraph_to: 70
+#
 # llm:
 #   model: gpt-4o

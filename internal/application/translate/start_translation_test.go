@@ -3,6 +3,7 @@ package translate_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -74,6 +75,8 @@ func TestStartTranslation_endToEndWithMocks(t *testing.T) {
 		IsLanguageAllowed: cfg.IsLanguageAllowed,
 		ChunkSize:         1,
 		Overlap:           0,
+		ParagraphFrom:     -1,
+		ParagraphTo:       -1,
 		DefaultPromptType: "nonfiction",
 		Model:             "test-model",
 		Provider:          "mock",
@@ -131,5 +134,67 @@ func TestStartTranslation_rejectsInvalidLanguage(t *testing.T) {
 	}
 	if !errors.Is(err, domain.ErrInvalidLanguage) {
 		t.Fatalf("error = %v, want ErrInvalidLanguage", err)
+	}
+}
+
+func TestStartTranslation_paragraphRange(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	fs := store.NewFilesystemStore(t.TempDir())
+	outPath := filepath.Join(t.TempDir(), "slice.md")
+
+	cfg, err := config.Load(filepath.Join(repoRoot(t), "configs"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	renderer, err := prompt.NewYAMLRenderer(cfg.Prompts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var paras []domain.Paragraph
+	for i := 0; i < 10; i++ {
+		paras = append(paras, domain.Paragraph{Index: i, Text: fmt.Sprintf("Paragraph %d.", i)})
+	}
+
+	process := &translate.ProcessChunk{
+		LLM:     &mockLLM{},
+		Store:   fs,
+		Prompts: renderer,
+		LLMCfg:  translate.LLMConfig{Model: "test-model", MaxTokens: 1024},
+	}
+
+	start := &translate.StartTranslation{
+		Extractor:         &mockExtractor{paragraphs: paras},
+		Store:             fs,
+		ProcessChunk:      process,
+		Finalize:          &translate.FinalizeTranslation{Store: fs},
+		NewContext:        func(id string) ports.ContextManager { return contextmgr.NewFixedWindow(fs, id, 2000) },
+		BuildChunks:       chunkinfra.BuildChunks,
+		IsLanguageAllowed: cfg.IsLanguageAllowed,
+		ChunkSize:         10,
+		Overlap:           0,
+		ParagraphFrom:     3,
+		ParagraphTo:       5,
+		DefaultPromptType: "nonfiction",
+		Model:             "test-model",
+	}
+
+	result, err := start.Execute(ctx, translate.StartTranslationRequest{
+		SourcePath: "/books/sample.pdf",
+		OutputPath: outPath,
+		TargetLang: "ru",
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+
+	state, _, err := fs.Load(ctx, result.TranslationID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.TotalChunks != 1 {
+		t.Fatalf("total chunks = %d, want 1 for 3-paragraph slice", state.TotalChunks)
 	}
 }

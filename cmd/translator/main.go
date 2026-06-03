@@ -83,6 +83,8 @@ func main() {
 		IsLanguageAllowed: cfg.IsLanguageAllowed,
 		ChunkSize:         cfg.Chunk.SizeParagraphs,
 		Overlap:           cfg.Chunk.OverlapParagraphs,
+		ParagraphFrom:     cfg.Translation.ParagraphFrom,
+		ParagraphTo:       cfg.Translation.ParagraphTo,
 		DefaultPromptType: "nonfiction",
 		Model:             cfg.LLM.Model,
 		Provider:          "openai",
@@ -102,9 +104,11 @@ func main() {
 		Finalize:     &translate.FinalizeTranslation{Store: fs},
 		NewContext:   newContext,
 		BuildChunks:  chunk.BuildChunks,
-		ChunkSize:    cfg.Chunk.SizeParagraphs,
-		Overlap:      cfg.Chunk.OverlapParagraphs,
-		Model:        cfg.LLM.Model,
+		ChunkSize:     cfg.Chunk.SizeParagraphs,
+		Overlap:       cfg.Chunk.OverlapParagraphs,
+		ParagraphFrom: cfg.Translation.ParagraphFrom,
+		ParagraphTo:   cfg.Translation.ParagraphTo,
+		Model:         cfg.LLM.Model,
 		Provider:     "openai",
 	}
 
