@@ -38,49 +38,6 @@ type LLMCallConfig struct {
 type LLMConfig struct {
 	Translation LLMCallConfig `mapstructure:"translation"`
 	Context     LLMCallConfig `mapstructure:"context"`
-
-	// Legacy flat keys (llm.model, llm.context_model, …) — merged in Normalize().
-	LegacyModel        string  `mapstructure:"model"`
-	LegacyContextModel string  `mapstructure:"context_model"`
-	LegacyTemperature  float64 `mapstructure:"temperature"`
-	LegacyMaxTokens    int     `mapstructure:"max_tokens"`
-}
-
-// Normalize fills nested translation/context blocks from legacy flat keys and defaults.
-func (c *LLMConfig) Normalize() {
-	if c.Translation.Model == "" {
-		c.Translation.Model = c.LegacyModel
-	}
-	if c.Translation.Temperature == 0 {
-		c.Translation.Temperature = c.LegacyTemperature
-	}
-	if c.Translation.MaxTokens == 0 {
-		c.Translation.MaxTokens = c.LegacyMaxTokens
-	}
-
-	if c.Context.Model == "" {
-		if c.LegacyContextModel != "" {
-			c.Context.Model = c.LegacyContextModel
-		} else {
-			c.Context.Model = c.Translation.Model
-		}
-	}
-
-	if c.Translation.Model == "" {
-		c.Translation.Model = "gpt-4o-mini"
-	}
-	if c.Translation.Temperature == 0 {
-		c.Translation.Temperature = 0.3
-	}
-	if c.Translation.MaxTokens == 0 {
-		c.Translation.MaxTokens = 32768
-	}
-	if c.Context.Temperature == 0 {
-		c.Context.Temperature = 0.2
-	}
-	if c.Context.MaxTokens == 0 {
-		c.Context.MaxTokens = 8192
-	}
 }
 
 // TranslationConfig controls optional dev/test limits on the translation pipeline.
