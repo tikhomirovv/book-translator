@@ -84,7 +84,6 @@ func TestStartTranslation_endToEndWithMocks(t *testing.T) {
 		ParagraphTo:       -1,
 		DefaultPromptType: "nonfiction",
 		Model:             "test-model",
-		Provider:          "mock",
 	}
 
 	result, err := start.Execute(ctx, translate.StartTranslationRequest{

@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -41,7 +42,9 @@ func main() {
 	fs := store.NewFilesystemStore("")
 	registry := extract.NewRegistry()
 
-	baseLLM := openai.NewClient(cfg.OpenAIAPIKey, cfg.OpenAIBaseURL, nil)
+	baseLLM := openai.NewClient(cfg.OpenAIAPIKey, cfg.OpenAIBaseURL, &http.Client{
+		Timeout: time.Duration(cfg.RequestTimeoutSeconds) * time.Second,
+	})
 	llm := &llminfra.RateLimitedLLM{
 		Inner: &llminfra.RetryLLM{
 			Inner:       baseLLM,
@@ -85,7 +88,6 @@ func main() {
 		ParagraphTo:       cfg.Translation.ParagraphTo,
 		DefaultPromptType: "nonfiction",
 		Model:             cfg.LLM.Translation.Model,
-		Provider:          "openai",
 		LogDebug: func(msg string, kv ...any) {
 			ev := logger.Debug()
 			for i := 0; i+1 < len(kv); i += 2 {
@@ -107,7 +109,6 @@ func main() {
 		ParagraphFrom: cfg.Translation.ParagraphFrom,
 		ParagraphTo:   cfg.Translation.ParagraphTo,
 		Model:         cfg.LLM.Translation.Model,
-		Provider:     "openai",
 	}
 
 	cli.SetApp(&cli.App{

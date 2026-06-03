@@ -9,19 +9,17 @@
 | Конфиг | [viper](https://github.com/spf13/viper) | defaults → `config.yaml` → `config.local.yaml` → env |
 | Логи | [zerolog](https://github.com/rs/zerolog) | Структурированные логи |
 | Progress | [schollz/progressbar](https://github.com/schollz/progressbar) | CLI progress |
-| PDF (MVP) | [ledongthuc/pdf](https://github.com/ledongthuc/pdf) | BSD-3, ~585★, plain text по страницам, без лицензионных ограничений для SaaS |
+| PDF (MVP) | [razvandimescu/gopdf](https://github.com/razvandimescu/gopdf) | MIT, ToUnicode/encoding, reflow параграфов |
 | Контекст (future) | [tqbf/contextwindow](https://github.com/tqbf/contextwindow) | Автосжатие контекста |
 
 ### Выбор PDF-библиотеки
 
 | Библиотека | Stars (≈) | Лицензия | Текст для книг | Роль в проекте |
 |------------|-----------|----------|----------------|----------------|
-| **ledongthuc/pdf** | ~585 | BSD-3 | Plain text по страницам | **MVP-адаптер** |
-| pdfcpu | ~8550 | Apache-2.0 | Слабое (raw streams) | Не для extract; опционально validate/merge позже |
-| unipdf | ~3056 | Commercial / AGPL | Отличное + layout | Не для MVP (лицензия SaaS) |
-| razvandimescu/gopdf | новая | MIT | Positioned + line rebuild | **Будущий адаптер** при сложной вёрстке |
+| **razvandimescu/gopdf** | новая | MIT | Positioned + line rebuild | **MVP-адаптер** |
+| **ledongthuc/pdf** | ~585 | BSD-3 | Plain text по страницам | Заменён в MVP |
 
-**Решение MVP:** `ledongthuc/pdf` за портом `TextExtractor`. Постобработка: нормализация переносов → split по `\n\n` → параграфы.
+**Решение MVP:** `razvandimescu/gopdf` за портом `TextExtractor`. Постобработка: reflow переносов → нормализация параграфов.
 
 **Ограничения:** сканы без текстового слоя и сложная вёрстка — вне MVP; OCR — non-goal.
 
@@ -33,7 +31,7 @@
 
 - **Domain** — сущности и интерфейсы (ports); без зависимостей от фреймворков.
 - **Application** — use cases; оркестрация domain + ports.
-- **Infrastructure** — adapters (LLM, PDF, storage, context strategies).
+- **Infrastructure** — adapters (LLM, PDF, storage, context memory).
 - **Interfaces** — driving adapters (CLI сейчас, HTTP позже).
 - **Composition root** — `cmd/translator/main.go`: wiring, DI.
 
@@ -90,13 +88,13 @@ book-translator/
 │   │   │   ├── rate_limiter.go
 │   │   │   └── retry.go
 │   │   ├── extract/
-│   │   │   ├── pdf_ledongthuc.go     # MVP
-│   │   │   └── registry.go           # по расширению файла
+│   │   │   ├── pdf_extractor.go      # gopdf adapter
+│   │   │   ├── paragraph_reflow.go
+│   │   │   └── registry.go
 │   │   ├── context/
-│   │   │   ├── fixed_window.go
-│   │   │   └── factory.go            # strategy from config
-│   │   ├── storage/
-│   │   │   └── fs_translation_store.go
+│   │   │   └── fixed_window.go       # LLM-consolidated context store
+│   │   ├── store/
+│   │   │   └── filesystem.go
 │   │   ├── prompt/
 │   │   │   └── yaml_renderer.go
 │   │   └── logging/
@@ -106,6 +104,7 @@ book-translator/
 │       └── cli/
 │           ├── root.go
 │           ├── translate.go
+│           ├── extract.go
 │           ├── resume.go
 │           ├── status.go
 │           ├── list.go
@@ -124,7 +123,7 @@ book-translator/
 **Расширение без переделки ядра:**
 - `internal/interfaces/http/` — REST handlers, те же use cases.
 - `internal/infrastructure/storage/postgres_translation_store.go` — новый adapter.
-- `internal/infrastructure/extract/pdf_gopdf.go` — второй `TextExtractor`.
+- `internal/infrastructure/extract/` — дополнительные `TextExtractor` (OCR, EPUB, …).
 
 ---
 
@@ -143,7 +142,7 @@ book-translator/
 | Слой | Содержимое | Git |
 |------|------------|-----|
 | `.env` | API keys, base URL | нет |
-| `config.yaml` | chunk, context, prompts, llm, languages, delays | да |
+| `config.yaml` | chunk, prompts, llm, languages, delays | да |
 | `config.local.yaml` | overrides | нет |
 
 ```yaml
@@ -152,14 +151,15 @@ chunk:
   size_paragraphs: 10
   overlap_paragraphs: 2
 
-context:
-  strategy: fixed_window
-  max_tokens: 2000
-
 llm:
-  model: gpt-4-turbo
-  temperature: 0.3
-  max_tokens: 4096
+  translation:
+    model: gpt-4o-mini
+    temperature: 0.3
+    max_tokens: 32768
+  context:
+    model: gpt-4o-mini
+    temperature: 0.2
+    max_tokens: 8192
 
 request_delay_ms: 1000
 
@@ -224,12 +224,19 @@ type Usage struct {
 - Заполнять из `response.Usage` провайдера, если есть.
 - Иначе — WARN в лог, нули в state; интерфейс `TokenCounter` (tiktoken) — заглушка / no-op в MVP.
 
-### 6. Context strategies
+### 6. Context memory (MVP)
 
-| `context.strategy` | Реализация |
+`FixedWindow` (`infrastructure/context/fixed_window.go`) хранит один consolidated-блок `ContextSummary`, который возвращает контекстная LLM. Клиент не обрезает память — лимит задаётся через `llm.context.max_tokens` (API + промпт `{{.MaxContextTokens}}`).
+
+Поток на чанк:
+1. `BuildPromptContext` — контекст из предыдущих чанков → в промпт перевода.
+2. Параллельно: перевод + context extraction (previous context + новый excerpt).
+3. `AddExtracted` — заменяет сохранённый контекст ответом модели.
+
+| Стратегия (future) | Реализация |
 |--------------------|------------|
-| `fixed_window` | `infrastructure/context/fixed_window.go` (MVP) |
-| `auto_summarize` | обёртка `contextwindow` (v0.2) |
+| LLM consolidation | `fixed_window.go` (MVP) |
+| `contextwindow` | v0.2+ |
 
 ### 7. Файловое хранилище
 
@@ -273,7 +280,7 @@ translations/<uuid>/
 
 ### TranslationState (`state.json`)
 
-Агрегат: прогресс, glossary, contextSummary, cumulative `Usage`.
+Агрегат: прогресс, `contextSummary` (consolidated LLM memory), cumulative `Usage`.
 
 ---
 
@@ -293,8 +300,8 @@ translations/<uuid>/
 | Интеграция | MVP | Позже |
 |------------|-----|-------|
 | OpenAI-compatible API | да | — |
-| ledongthuc/pdf | да | — |
-| gopdf extract | нет | v0.2 |
+| razvandimescu/gopdf | да | — |
+| OCR / scanned PDF | нет | отдельная задача |
 | HTTP API | нет | v0.3 |
 | PostgreSQL store | нет | v0.4 |
 | tiktoken TokenCounter | stub | v0.2 |
@@ -307,7 +314,7 @@ translations/<uuid>/
 | Риск | Митигация |
 |------|-----------|
 | Плохой PDF extract (layout) | Документировать; адаптер gopdf; OCR — non-goal |
-| Потеря длинного контекста | ContextManager strategies |
+| Потеря длинного контекста | LLM consolidation + `llm.context.max_tokens`; стратегии позже |
 | Нет usage в ответе API | WARN + tiktoken позже |
 | Rate limit 429 | retry + `request_delay_ms` |
-| ledongthuc/pdf устареет | Порт `TextExtractor` изолирует замену |
+| ledongthuc/pdf устарел / заменён | Порт `TextExtractor` изолирует замену |

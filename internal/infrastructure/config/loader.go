@@ -50,6 +50,9 @@ func Load(configDir string) (*Config, error) {
 	if cfg.LogLevel == "" {
 		cfg.LogLevel = "info"
 	}
+	if cfg.RequestTimeoutSeconds <= 0 {
+		cfg.RequestTimeoutSeconds = 120
+	}
 
 	cfg.OpenAIAPIKey = normalizeAPIKey(firstNonEmpty(
 		v.GetString("openai_api_key"),
@@ -86,6 +89,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("translation.paragraph_from", -1)
 	v.SetDefault("translation.paragraph_to", -1)
 	v.SetDefault("request_delay_ms", 1000)
+	v.SetDefault("request_timeout_seconds", 120)
 	v.SetDefault("allowed_languages", []string{"ru", "en"})
 	v.SetDefault("log_level", "info")
 }

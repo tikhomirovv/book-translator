@@ -14,7 +14,10 @@ import (
 	"github.com/tikhomirovv/book-translator/internal/domain/ports"
 )
 
-const defaultBaseURL = "https://api.openai.com/v1"
+const (
+	defaultBaseURL        = "https://api.openai.com/v1"
+	DefaultRequestTimeout = 120 * time.Second
+)
 
 // Client calls an OpenAI-compatible chat completions API.
 type Client struct {
@@ -31,7 +34,7 @@ func NewClient(apiKey, baseURL string, httpClient *http.Client) *Client {
 	}
 	baseURL = strings.TrimRight(baseURL, "/")
 	if httpClient == nil {
-		httpClient = &http.Client{Timeout: 120 * time.Second}
+		httpClient = &http.Client{Timeout: DefaultRequestTimeout}
 	}
 	return &Client{
 		baseURL:    baseURL,

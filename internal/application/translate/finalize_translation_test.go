@@ -51,7 +51,6 @@ func TestFinalizeTranslation_writesFrontmatter(t *testing.T) {
 	if err := uc.Execute(ctx, translate.FinalizeTranslationRequest{
 		TranslationID: tr.ID,
 		Model:         "gpt-test",
-		Provider:      "openai",
 	}); err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
@@ -64,7 +63,8 @@ func TestFinalizeTranslation_writesFrontmatter(t *testing.T) {
 	for _, want := range []string{
 		"target_lang: de",
 		"model: gpt-test",
-		"provider: openai",
+		"input_tokens: 20",
+		"output_tokens: 10",
 		"total_tokens: 30",
 		"# Part one",
 		"# Part two",

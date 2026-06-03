@@ -7,6 +7,8 @@
 #   paragraph_from: 30
 #   paragraph_to: 70
 #
+# request_timeout_seconds: 600
+#
 # llm:
 #   translation:
 #     model: anthropic/claude-sonnet-4.6

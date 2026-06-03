@@ -19,7 +19,6 @@ type FinalizeTranslation struct {
 type FinalizeTranslationRequest struct {
 	TranslationID string
 	Model         string
-	Provider      string
 }
 
 // Execute writes output Markdown with YAML frontmatter and marks translation completed.
@@ -67,11 +66,8 @@ func buildOutputMarkdown(tr *domain.Translation, req FinalizeTranslationRequest,
 	if req.Model != "" {
 		b.WriteString(fmt.Sprintf("model: %s\n", req.Model))
 	}
-	if req.Provider != "" {
-		b.WriteString(fmt.Sprintf("provider: %s\n", req.Provider))
-	}
-	b.WriteString(fmt.Sprintf("prompt_tokens: %d\n", usage.PromptTokens))
-	b.WriteString(fmt.Sprintf("completion_tokens: %d\n", usage.CompletionTokens))
+	b.WriteString(fmt.Sprintf("input_tokens: %d\n", usage.PromptTokens))
+	b.WriteString(fmt.Sprintf("output_tokens: %d\n", usage.CompletionTokens))
 	b.WriteString(fmt.Sprintf("total_tokens: %d\n", usage.TotalTokens))
 	if usage.EstimatedCost != nil {
 		b.WriteString(fmt.Sprintf("estimated_cost: %.6f\n", *usage.EstimatedCost))
