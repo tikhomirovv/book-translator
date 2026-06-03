@@ -28,12 +28,13 @@ CLI-инструмент для перевода книг и длинных те
 
 ## Текущий статус
 
-**Фаза:** проектирование и документация. Код не начат.
+**Фаза:** MVP — CLI работает, идёт доводка качества перевода и извлечения текста.
 
 **Зафиксировано:**
 - Стек: **Go**, CLI (Cobra), конфигурация **Viper**.
-- MVP: PDF → перевод → Markdown; только CLI.
+- MVP: PDF → перевод → Markdown; CLI + команда `extract` для отладки извлечения.
 - Главная сущность — **перевод** (Translation, UUID v4), а не книга.
 - Архитектура: Standard Go Layout + Clean Architecture (ports/adapters) — см. `.docs/technical-design.md`.
-- PDF: `ledongthuc/pdf` (BSD); токены/стоимость — из ответа API, tiktoken позже.
+- PDF: `razvandimescu/gopdf` с reflow параграфов; токены/стоимость — из ответа API, tiktoken позже.
 - Чанк по умолчанию: **10 параграфов**.
+- LLM: два независимых профиля в конфиге — `llm.translation` и `llm.context`.

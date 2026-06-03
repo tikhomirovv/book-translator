@@ -13,25 +13,43 @@ Product and technical docs live in [`.docs/`](.docs/):
 ## Requirements
 
 - Go 1.24+
-- OpenAI-compatible API key (or compatible provider base URL)
+- OpenAI-compatible API endpoint (OpenAI, LM Studio, local gateway, etc.)
 
 ## Install and build
 
 ```bash
 git clone https://github.com/tikhomirovv/book-translator.git
 cd book-translator
-cp .env.example .env   # set OPENAI_API_KEY
+cp .env.example .env   # optional: OPENAI_API_KEY, OPENAI_BASE_URL, LOG_LEVEL
 make build             # produces bin/translator
 make test
 ```
 
 ## Configuration
 
+Priority (highest last): defaults → `configs/config.yaml` → `configs/config.local.yaml` → environment variables.
+
 | Layer | Purpose |
 |-------|---------|
-| `.env` | Secrets: `OPENAI_API_KEY`, optional `OPENAI_BASE_URL`, `LOG_LEVEL` |
-| `configs/config.yaml` | Defaults: chunk size, context strategy, prompts, LLM model |
+| `.env` | Secrets and runtime: `OPENAI_API_KEY`, optional `OPENAI_BASE_URL`, `LOG_LEVEL` |
+| `configs/config.yaml` | Defaults: chunk size, prompts, LLM profiles |
 | `configs/config.local.yaml` | Local overrides (not committed) |
+
+For local OpenAI-compatible servers (e.g. LM Studio), `OPENAI_API_KEY` can be empty or a placeholder when `OPENAI_BASE_URL` points to your server.
+
+LLM settings are split into two independent profiles:
+
+```yaml
+llm:
+  translation:   # main book translation
+    model: gpt-4o-mini
+    temperature: 0.3
+    max_tokens: 32768
+  context:       # rolling translation memory between chunks
+    model: gpt-4o-mini
+    temperature: 0.2
+    max_tokens: 8192
+```
 
 Allowed target languages are listed in `configs/config.yaml` under `allowed_languages`.
 
@@ -40,7 +58,7 @@ To translate only part of a book while tuning prompts (cheap iteration), set in 
 ```yaml
 translation:
   paragraph_from: 30   # inclusive, 0-based paragraph index
-  paragraph_to: 70       # inclusive; use -1 for open end
+  paragraph_to: 70     # inclusive; use -1 for open end
 ```
 
 Leave both at `-1` (default) for a full-book run.
@@ -67,6 +85,14 @@ Omit flags to be prompted for input path, output path, target language, and prom
 ./bin/translator translate
 ```
 
+### Extract text only (debug PDF step)
+
+Run extraction without calling the LLM:
+
+```bash
+./bin/translator extract --input book.pdf --output book.extracted.txt
+```
+
 ### Resume, status, list
 
 ```bash
@@ -76,6 +102,8 @@ Omit flags to be prompted for input path, output path, target language, and prom
 ```
 
 Progress is stored under `translations/<uuid>/`. The translation ID is printed when a job starts and appears in `list` / `status`.
+
+Extracted source paragraphs are also saved as `translations/<uuid>/source.extracted.txt` during a full translate run.
 
 ## Output
 

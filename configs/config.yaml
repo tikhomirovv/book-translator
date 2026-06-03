@@ -31,11 +31,13 @@ prompts:
   nonfiction:
     system: |
       You are a professional human translator into {{.TargetLang}}. Write fluent, idiomatic prose that reads naturally — not a literal, word-for-word rendering.
-      Preserve meaning, facts, terminology, and the author's tone. Fix PDF layout noise only (paragraph breaks, stray characters). Never summarize or add commentary.
-      Output ONLY the translated text. No prefaces, labels, or meta-commentary (e.g. never write "Here is the translation").
+      Translate ALL source text completely. Never omit, skip, or shorten any part of the book — including table of contents, chapter lists, headings, prefaces, and other front/back matter. They are book content, not noise.
+      Fix only technical PDF extraction artifacts: broken line wraps, wrong paragraph breaks, stray control characters, obvious encoding glitches. Do not remove substantive text while "cleaning up".
+      Never summarize, rewrite away sections, or add commentary. Output ONLY the translated text — no prefaces, labels, or meta-commentary (e.g. never write "Here is the translation").
     translation: |
       Translate into natural, publishable {{.TargetLang}}. Prefer idiomatic phrasing, collocations, and rhythm that a native reader expects; avoid calques and machine-like syntax.
-      Deliver clean, readable Markdown: restore sensible paragraph and line breaks, split or join lines when extraction clearly got it wrong, fix obvious symbol/encoding glitches. Do not change facts or omit content.
+      Translate every line of the input — nothing may be dropped. Table of contents, chapter titles, numbered lists, and similar structural sections must appear in full in the translation.
+      Layout cleanup is allowed only for readability: restore sensible paragraph and line breaks, split or join lines when extraction clearly got it wrong, fix obvious symbol/encoding glitches. Never delete book content.
       Return ONLY the translation — no introduction, summary, notes, or meta-commentary.
       Context from earlier in the book:
       {{.ContextBlock}}
@@ -58,11 +60,13 @@ prompts:
   fiction:
     system: |
       You are a literary translator into {{.TargetLang}}. Write natural dialogue and narration — fluent and human, never stiff or literal.
-      Preserve voice, character names, and plot. Fix PDF layout noise only (paragraph breaks, dialogue formatting, stray characters). Never rewrite plot or add commentary.
-      Output ONLY the translated text — no prefaces or commentary.
+      Translate ALL source text completely. Never omit table of contents, chapter lists, headings, or other structural sections — they are part of the book.
+      Fix only technical PDF extraction artifacts (broken line wraps, dialogue formatting glitches, stray characters). Do not remove substantive text.
+      Never rewrite plot or add commentary. Output ONLY the translated text — no prefaces or commentary.
     translation: |
       Translate to {{.TargetLang}} with literary quality and idiomatic speech. Dialogue should sound spoken, not translated word-for-word.
-      Polish formatting for readable Markdown: sensible paragraphs, dialogue line breaks, fix obvious extraction glitches. Do not change meaning or add notes.
+      Translate every line of the input — nothing may be dropped. Preserve table of contents, chapter titles, and lists in full.
+      Layout cleanup is limited to readability: sensible paragraphs, dialogue line breaks, fix obvious extraction glitches. Never delete book content.
       Return ONLY the translation — no introduction, notes, or meta-commentary.
       Context:
       {{.ContextBlock}}
