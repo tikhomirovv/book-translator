@@ -68,12 +68,7 @@ func main() {
 	}
 
 	newContext := func(translationID string) ports.ContextManager {
-		mgr, err := contextmgr.NewContextManager(cfg.Context.Strategy, fs, translationID, cfg.Context.MaxTokens)
-		if err != nil {
-			logger.Warn().Err(err).Msg("context manager fallback")
-			return contextmgr.NewFixedWindow(fs, translationID, cfg.Context.MaxTokens)
-		}
-		return mgr
+		return contextmgr.NewFixedWindow(fs, translationID)
 	}
 
 	startUC := &translate.StartTranslation{

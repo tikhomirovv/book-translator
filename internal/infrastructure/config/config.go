@@ -3,7 +3,6 @@ package config
 // Config holds application settings loaded from YAML and env.
 type Config struct {
 	Chunk            ChunkConfig            `mapstructure:"chunk"`
-	Context          ContextConfig          `mapstructure:"context"`
 	LLM              LLMConfig              `mapstructure:"llm"`
 	Translation      TranslationConfig      `mapstructure:"translation"`
 	RequestDelayMs   int                    `mapstructure:"request_delay_ms"`
@@ -19,12 +18,6 @@ type Config struct {
 type ChunkConfig struct {
 	SizeParagraphs    int `mapstructure:"size_paragraphs"`
 	OverlapParagraphs int `mapstructure:"overlap_paragraphs"`
-}
-
-// ContextConfig selects memory strategy.
-type ContextConfig struct {
-	Strategy  string `mapstructure:"strategy"`
-	MaxTokens int    `mapstructure:"max_tokens"`
 }
 
 // LLMCallConfig holds model parameters for one chat completion role.

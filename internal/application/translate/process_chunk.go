@@ -88,7 +88,10 @@ func (uc *ProcessChunk) Execute(ctx context.Context, req ProcessChunkRequest) er
 	if err != nil {
 		return fmt.Errorf("render translation prompt: %w", err)
 	}
-	contextPrompt, err := uc.Prompts.Render(req.PromptType, templateContextExtraction, promptData)
+
+	contextPromptData := promptData
+	contextPromptData.MaxContextTokens = uc.ContextLLM.MaxTokens
+	contextPrompt, err := uc.Prompts.Render(req.PromptType, templateContextExtraction, contextPromptData)
 	if err != nil {
 		return fmt.Errorf("render context extraction prompt: %w", err)
 	}
@@ -186,8 +189,8 @@ func usageFromChat(u ports.ChatUsage) domain.Usage {
 	}
 }
 
-// parseContextExtraction turns LLM output into ContextManager data.
-// JSON with summary/glossary is preferred; plain text becomes summary.
+// parseContextExtraction turns LLM output into the next consolidated context block.
+// JSON with summary/context is accepted; plain text is stored as-is.
 func parseContextExtraction(raw string) map[string]any {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
@@ -195,19 +198,15 @@ func parseContextExtraction(raw string) map[string]any {
 	}
 
 	var parsed struct {
-		Summary  string         `json:"summary"`
-		Glossary map[string]any `json:"glossary"`
+		Summary string `json:"summary"`
+		Context string `json:"context"`
 	}
 	if err := json.Unmarshal([]byte(raw), &parsed); err == nil {
-		out := map[string]any{}
-		if strings.TrimSpace(parsed.Summary) != "" {
-			out["summary"] = strings.TrimSpace(parsed.Summary)
+		if text := strings.TrimSpace(parsed.Context); text != "" {
+			return map[string]any{"summary": text}
 		}
-		if len(parsed.Glossary) > 0 {
-			out["glossary"] = parsed.Glossary
-		}
-		if len(out) > 0 {
-			return out
+		if text := strings.TrimSpace(parsed.Summary); text != "" {
+			return map[string]any{"summary": text}
 		}
 	}
 

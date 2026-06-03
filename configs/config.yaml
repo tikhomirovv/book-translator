@@ -4,10 +4,6 @@ chunk:
   size_paragraphs: 10
   overlap_paragraphs: 2
 
-context:
-  strategy: fixed_window
-  max_tokens: 2000
-
 llm:
   translation:
     model: gpt-4o-mini
@@ -47,12 +43,17 @@ prompts:
       Text:
       {{.ChunkText}}
     context_extraction: |
-      From this book excerpt, extract only information that should be remembered for consistent
-      translation later (terms, names, concepts, style notes — whatever matters for THIS book).
-      Return concise structured notes, not a summary of plot unless it is a fiction work.
+      You maintain rolling translation memory for this book. Merge the previous context with
+      new facts from the current excerpt (terms, names, concepts, style notes — whatever matters
+      for consistent translation later). Drop stale details when space is tight.
+      Return ONLY the updated context block — no commentary, no JSON wrapper unless asked.
+      Keep the result within roughly {{.MaxContextTokens}} tokens.
       Target language: {{.TargetLang}}
 
-      Text:
+      Previous context:
+      {{.ContextBlock}}
+
+      New excerpt:
       {{.ChunkText}}
   fiction:
     system: |
@@ -69,8 +70,14 @@ prompts:
       Text:
       {{.ChunkText}}
     context_extraction: |
-      Extract characters, places, terms, and plot threads that must stay consistent.
+      You maintain rolling literary translation memory. Merge previous context with characters,
+      places, terms, and plot threads from the new excerpt. Drop stale details when space is tight.
+      Return ONLY the updated context block — no commentary.
+      Keep the result within roughly {{.MaxContextTokens}} tokens.
       Target: {{.TargetLang}}
 
-      Text:
+      Previous context:
+      {{.ContextBlock}}
+
+      New excerpt:
       {{.ChunkText}}

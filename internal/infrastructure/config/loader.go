@@ -77,8 +77,6 @@ func normalizeAPIKey(key string) string {
 func setDefaults(v *viper.Viper) {
 	v.SetDefault("chunk.size_paragraphs", 10)
 	v.SetDefault("chunk.overlap_paragraphs", 2)
-	v.SetDefault("context.strategy", "fixed_window")
-	v.SetDefault("context.max_tokens", 2000)
 	v.SetDefault("llm.translation.model", "gpt-4o-mini")
 	v.SetDefault("llm.translation.temperature", 0.3)
 	v.SetDefault("llm.translation.max_tokens", 32768)

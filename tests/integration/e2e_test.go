@@ -33,9 +33,9 @@ func (integrationLLM) Chat(ctx context.Context, req ports.ChatRequest) (*ports.C
 			user = msg.Content
 		}
 	}
-	if strings.Contains(user, "extract only information") || strings.Contains(user, "Extract characters") {
+	if strings.Contains(user, "You maintain rolling") {
 		return &ports.ChatResponse{
-			Content: `{"summary":"integration note","glossary":{"term":"value"}}`,
+			Content: `integration context note`,
 			Usage:   ports.ChatUsage{PromptTokens: 3, CompletionTokens: 2, TotalTokens: 5},
 		}, nil
 	}
@@ -185,7 +185,7 @@ func newTestStack(t *testing.T) *testStack {
 	}
 
 	newContext := func(id string) ports.ContextManager {
-		return contextmgr.NewFixedWindow(fs, id, cfg.Context.MaxTokens)
+		return contextmgr.NewFixedWindow(fs, id)
 	}
 
 	start := &translate.StartTranslation{
