@@ -22,9 +22,13 @@ type mockLLM struct {
 }
 
 type trackingLLM struct {
-	translateModel string
-	contextModel   string
-	models         []string
+	translateModel       string
+	contextModel         string
+	translateTemperature float64
+	contextTemperature   float64
+	translateMaxTokens   int
+	contextMaxTokens     int
+	models               []string
 }
 
 func (m *trackingLLM) Chat(ctx context.Context, req ports.ChatRequest) (*ports.ChatResponse, error) {
@@ -42,6 +46,12 @@ func (m *trackingLLM) Chat(ctx context.Context, req ports.ChatRequest) (*ports.C
 		if req.Model != m.contextModel {
 			return nil, errors.New("unexpected context model")
 		}
+		if req.Temperature != m.contextTemperature {
+			return nil, errors.New("unexpected context temperature")
+		}
+		if req.MaxTokens != m.contextMaxTokens {
+			return nil, errors.New("unexpected context max_tokens")
+		}
 		return &ports.ChatResponse{
 			Content: `{"summary":"notes"}`,
 			Usage:   ports.ChatUsage{PromptTokens: 1, CompletionTokens: 1, TotalTokens: 2},
@@ -49,6 +59,12 @@ func (m *trackingLLM) Chat(ctx context.Context, req ports.ChatRequest) (*ports.C
 	case strings.Contains(userContent, "Translate into") || strings.Contains(userContent, "Translate to"):
 		if req.Model != m.translateModel {
 			return nil, errors.New("unexpected translation model")
+		}
+		if req.Temperature != m.translateTemperature {
+			return nil, errors.New("unexpected translation temperature")
+		}
+		if req.MaxTokens != m.translateMaxTokens {
+			return nil, errors.New("unexpected translation max_tokens")
 		}
 		return &ports.ChatResponse{
 			Content: "Translated.",
@@ -130,7 +146,12 @@ func TestProcessChunk_success(t *testing.T) {
 		Store:   fs,
 		Prompts: renderer,
 		Context: mgr,
-		LLMCfg: translate.LLMConfig{
+		TranslationLLM: translate.LLMCallParams{
+			Model:       "test-model",
+			Temperature: 0.3,
+			MaxTokens:   1024,
+		},
+		ContextLLM: translate.LLMCallParams{
 			Model:       "test-model",
 			Temperature: 0.3,
 			MaxTokens:   1024,
@@ -175,7 +196,7 @@ func TestProcessChunk_success(t *testing.T) {
 	}
 }
 
-func TestProcessChunk_separateContextModel(t *testing.T) {
+func TestProcessChunk_independentLLMProfiles(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -209,18 +230,27 @@ func TestProcessChunk_separateContextModel(t *testing.T) {
 	}
 
 	llm := &trackingLLM{
-		translateModel: "big-translate",
-		contextModel:   "small-context",
+		translateModel:       "big-translate",
+		contextModel:         "small-context",
+		translateTemperature: 0.4,
+		contextTemperature:   0.1,
+		translateMaxTokens:   16000,
+		contextMaxTokens:     2048,
 	}
 	uc := &translate.ProcessChunk{
 		LLM:     llm,
 		Store:   fs,
 		Prompts: renderer,
 		Context: mgr,
-		LLMCfg: translate.LLMConfig{
-			Model:        "big-translate",
-			ContextModel: "small-context",
-			MaxTokens:    1024,
+		TranslationLLM: translate.LLMCallParams{
+			Model:       "big-translate",
+			Temperature: 0.4,
+			MaxTokens:   16000,
+		},
+		ContextLLM: translate.LLMCallParams{
+			Model:       "small-context",
+			Temperature: 0.1,
+			MaxTokens:   2048,
 		},
 	}
 
@@ -269,7 +299,8 @@ func TestProcessChunk_enforcesSequentialIndex(t *testing.T) {
 		Store:   fs,
 		Prompts: renderer,
 		Context: mgr,
-		LLMCfg:  translate.LLMConfig{Model: "test"},
+		TranslationLLM: translate.LLMCallParams{Model: "test"},
+		ContextLLM:     translate.LLMCallParams{Model: "test"},
 	}
 
 	err = uc.Execute(ctx, translate.ProcessChunkRequest{

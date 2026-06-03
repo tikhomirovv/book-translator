@@ -51,18 +51,20 @@ func main() {
 		Delay: time.Duration(cfg.RequestDelayMs) * time.Millisecond,
 	}
 
-	llmCfg := translate.LLMConfig{
-		Model:        cfg.LLM.Model,
-		ContextModel: cfg.LLM.ContextModel,
-		Temperature:  cfg.LLM.Temperature,
-		MaxTokens:    cfg.LLM.MaxTokens,
-	}
-
 	processChunk := &translate.ProcessChunk{
 		LLM:     llm,
 		Store:   fs,
 		Prompts: renderer,
-		LLMCfg:  llmCfg,
+		TranslationLLM: translate.LLMCallParams{
+			Model:       cfg.LLM.Translation.Model,
+			Temperature: cfg.LLM.Translation.Temperature,
+			MaxTokens:   cfg.LLM.Translation.MaxTokens,
+		},
+		ContextLLM: translate.LLMCallParams{
+			Model:       cfg.LLM.Context.Model,
+			Temperature: cfg.LLM.Context.Temperature,
+			MaxTokens:   cfg.LLM.Context.MaxTokens,
+		},
 	}
 
 	newContext := func(translationID string) ports.ContextManager {
@@ -87,7 +89,7 @@ func main() {
 		ParagraphFrom:     cfg.Translation.ParagraphFrom,
 		ParagraphTo:       cfg.Translation.ParagraphTo,
 		DefaultPromptType: "nonfiction",
-		Model:             cfg.LLM.Model,
+		Model:             cfg.LLM.Translation.Model,
 		Provider:          "openai",
 		LogDebug: func(msg string, kv ...any) {
 			ev := logger.Debug()
@@ -109,7 +111,7 @@ func main() {
 		Overlap:       cfg.Chunk.OverlapParagraphs,
 		ParagraphFrom: cfg.Translation.ParagraphFrom,
 		ParagraphTo:   cfg.Translation.ParagraphTo,
-		Model:         cfg.LLM.Model,
+		Model:         cfg.LLM.Translation.Model,
 		Provider:     "openai",
 	}
 

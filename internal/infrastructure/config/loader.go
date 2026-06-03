@@ -47,6 +47,8 @@ func Load(configDir string) (*Config, error) {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}
 
+	cfg.LLM.Normalize()
+
 	if cfg.LogLevel == "" {
 		cfg.LogLevel = "info"
 	}
@@ -79,6 +81,12 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("chunk.overlap_paragraphs", 2)
 	v.SetDefault("context.strategy", "fixed_window")
 	v.SetDefault("context.max_tokens", 2000)
+	v.SetDefault("llm.translation.model", "gpt-4o-mini")
+	v.SetDefault("llm.translation.temperature", 0.3)
+	v.SetDefault("llm.translation.max_tokens", 32768)
+	v.SetDefault("llm.context.temperature", 0.2)
+	v.SetDefault("llm.context.max_tokens", 8192)
+	// Legacy flat keys (still supported via LLMConfig.Normalize).
 	v.SetDefault("llm.model", "gpt-4o-mini")
 	v.SetDefault("llm.temperature", 0.3)
 	v.SetDefault("llm.max_tokens", 32768)

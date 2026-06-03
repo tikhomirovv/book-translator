@@ -18,28 +18,21 @@ const (
 	templateContextExtraction = "context_extraction"
 )
 
-// LLMConfig holds non-secret model parameters for chat calls.
-type LLMConfig struct {
-	Model        string
-	ContextModel string
-	Temperature  float64
-	MaxTokens    int
-}
-
-func (c LLMConfig) contextModel() string {
-	if c.ContextModel != "" {
-		return c.ContextModel
-	}
-	return c.Model
+// LLMCallParams holds model parameters for one chat completion role.
+type LLMCallParams struct {
+	Model       string
+	Temperature float64
+	MaxTokens   int
 }
 
 // ProcessChunk translates one chunk and extracts context in parallel.
 type ProcessChunk struct {
-	LLM     ports.LLMProvider
-	Store   ports.TranslationStore
-	Prompts ports.PromptRenderer
-	Context ports.ContextManager
-	LLMCfg  LLMConfig
+	LLM            ports.LLMProvider
+	Store          ports.TranslationStore
+	Prompts        ports.PromptRenderer
+	Context        ports.ContextManager
+	TranslationLLM LLMCallParams
+	ContextLLM     LLMCallParams
 }
 
 // ProcessChunkRequest describes one chunk iteration.
@@ -111,13 +104,13 @@ func (uc *ProcessChunk) Execute(ctx context.Context, req ProcessChunkRequest) er
 
 	g.Go(func() error {
 		resp, err := uc.LLM.Chat(gctx, ports.ChatRequest{
-			Model: uc.LLMCfg.Model,
+			Model: uc.TranslationLLM.Model,
 			Messages: []ports.ChatMessage{
 				{Role: "system", Content: systemPrompt},
 				{Role: "user", Content: translationPrompt},
 			},
-			Temperature: uc.LLMCfg.Temperature,
-			MaxTokens:   uc.LLMCfg.MaxTokens,
+			Temperature: uc.TranslationLLM.Temperature,
+			MaxTokens:   uc.TranslationLLM.MaxTokens,
 		})
 		if err != nil {
 			return fmt.Errorf("translate chunk %d: %w", req.Chunk.Index, err)
@@ -129,13 +122,13 @@ func (uc *ProcessChunk) Execute(ctx context.Context, req ProcessChunkRequest) er
 
 	g.Go(func() error {
 		resp, err := uc.LLM.Chat(gctx, ports.ChatRequest{
-			Model: uc.LLMCfg.contextModel(),
+			Model: uc.ContextLLM.Model,
 			Messages: []ports.ChatMessage{
 				{Role: "system", Content: systemPrompt},
 				{Role: "user", Content: contextPrompt},
 			},
-			Temperature: uc.LLMCfg.Temperature,
-			MaxTokens:   uc.LLMCfg.MaxTokens,
+			Temperature: uc.ContextLLM.Temperature,
+			MaxTokens:   uc.ContextLLM.MaxTokens,
 		})
 		if err != nil {
 			return fmt.Errorf("extract context chunk %d: %w", req.Chunk.Index, err)

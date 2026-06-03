@@ -51,7 +51,12 @@ func TestStartTranslation_endToEndWithMocks(t *testing.T) {
 		LLM:     &mockLLM{},
 		Store:   fs,
 		Prompts: renderer,
-		LLMCfg: translate.LLMConfig{
+		TranslationLLM: translate.LLMCallParams{
+			Model:       "test-model",
+			Temperature: 0.3,
+			MaxTokens:   1024,
+		},
+		ContextLLM: translate.LLMCallParams{
 			Model:       "test-model",
 			Temperature: 0.3,
 			MaxTokens:   1024,
@@ -159,10 +164,11 @@ func TestStartTranslation_paragraphRange(t *testing.T) {
 	}
 
 	process := &translate.ProcessChunk{
-		LLM:     &mockLLM{},
-		Store:   fs,
-		Prompts: renderer,
-		LLMCfg:  translate.LLMConfig{Model: "test-model", MaxTokens: 1024},
+		LLM:            &mockLLM{},
+		Store:          fs,
+		Prompts:        renderer,
+		TranslationLLM: translate.LLMCallParams{Model: "test-model", MaxTokens: 1024},
+		ContextLLM:     translate.LLMCallParams{Model: "test-model", MaxTokens: 1024},
 	}
 
 	start := &translate.StartTranslation{

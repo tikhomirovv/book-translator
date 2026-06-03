@@ -27,20 +27,60 @@ type ContextConfig struct {
 	MaxTokens int    `mapstructure:"max_tokens"`
 }
 
-// LLMConfig is passed to the provider (non-secret).
-type LLMConfig struct {
-	Model        string  `mapstructure:"model"`
-	ContextModel string  `mapstructure:"context_model"`
-	Temperature  float64 `mapstructure:"temperature"`
-	MaxTokens    int     `mapstructure:"max_tokens"`
+// LLMCallConfig holds model parameters for one chat completion role.
+type LLMCallConfig struct {
+	Model       string  `mapstructure:"model"`
+	Temperature float64 `mapstructure:"temperature"`
+	MaxTokens   int     `mapstructure:"max_tokens"`
 }
 
-// ContextModelName returns the model for context extraction; falls back to Model.
-func (c LLMConfig) ContextModelName() string {
-	if c.ContextModel != "" {
-		return c.ContextModel
+// LLMConfig holds independent settings for translation and context extraction.
+type LLMConfig struct {
+	Translation LLMCallConfig `mapstructure:"translation"`
+	Context     LLMCallConfig `mapstructure:"context"`
+
+	// Legacy flat keys (llm.model, llm.context_model, …) — merged in Normalize().
+	LegacyModel        string  `mapstructure:"model"`
+	LegacyContextModel string  `mapstructure:"context_model"`
+	LegacyTemperature  float64 `mapstructure:"temperature"`
+	LegacyMaxTokens    int     `mapstructure:"max_tokens"`
+}
+
+// Normalize fills nested translation/context blocks from legacy flat keys and defaults.
+func (c *LLMConfig) Normalize() {
+	if c.Translation.Model == "" {
+		c.Translation.Model = c.LegacyModel
 	}
-	return c.Model
+	if c.Translation.Temperature == 0 {
+		c.Translation.Temperature = c.LegacyTemperature
+	}
+	if c.Translation.MaxTokens == 0 {
+		c.Translation.MaxTokens = c.LegacyMaxTokens
+	}
+
+	if c.Context.Model == "" {
+		if c.LegacyContextModel != "" {
+			c.Context.Model = c.LegacyContextModel
+		} else {
+			c.Context.Model = c.Translation.Model
+		}
+	}
+
+	if c.Translation.Model == "" {
+		c.Translation.Model = "gpt-4o-mini"
+	}
+	if c.Translation.Temperature == 0 {
+		c.Translation.Temperature = 0.3
+	}
+	if c.Translation.MaxTokens == 0 {
+		c.Translation.MaxTokens = 32768
+	}
+	if c.Context.Temperature == 0 {
+		c.Context.Temperature = 0.2
+	}
+	if c.Context.MaxTokens == 0 {
+		c.Context.MaxTokens = 8192
+	}
 }
 
 // TranslationConfig controls optional dev/test limits on the translation pipeline.

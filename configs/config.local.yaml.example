@@ -8,5 +8,11 @@
 #   paragraph_to: 70
 #
 # llm:
-#   model: gpt-4o
-#   context_model: gpt-4o-mini
+#   translation:
+#     model: anthropic/claude-sonnet-4.6
+#     temperature: 0.3
+#     max_tokens: 32768
+#   context:
+#     model: deepseek/deepseek-v4-flash
+#     temperature: 0.1
+#     max_tokens: 8192

@@ -77,10 +77,11 @@ func TestResumeTranslation_skipsCompletedChunks(t *testing.T) {
 	}
 
 	process := &translate.ProcessChunk{
-		LLM:     &resumeMockLLM{},
-		Store:   fs,
-		Prompts: renderer,
-		LLMCfg:  translate.LLMConfig{Model: "test"},
+		LLM:            &resumeMockLLM{},
+		Store:          fs,
+		Prompts:        renderer,
+		TranslationLLM: translate.LLMCallParams{Model: "test"},
+		ContextLLM:     translate.LLMCallParams{Model: "test"},
 	}
 
 	uc := &resume.ResumeTranslation{

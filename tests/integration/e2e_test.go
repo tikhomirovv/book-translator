@@ -168,12 +168,20 @@ func newTestStack(t *testing.T) *testStack {
 	}))
 
 	llm := integrationLLM{}
-	llmCfg := translate.LLMConfig{Model: "mock", Temperature: 0.3, MaxTokens: 512}
 	process := &translate.ProcessChunk{
 		LLM:     llm,
 		Store:   fs,
 		Prompts: renderer,
-		LLMCfg:  llmCfg,
+		TranslationLLM: translate.LLMCallParams{
+			Model:       "mock",
+			Temperature: 0.3,
+			MaxTokens:   512,
+		},
+		ContextLLM: translate.LLMCallParams{
+			Model:       "mock",
+			Temperature: 0.3,
+			MaxTokens:   512,
+		},
 	}
 
 	newContext := func(id string) ports.ContextManager {
