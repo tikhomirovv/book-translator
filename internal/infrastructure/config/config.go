@@ -27,20 +27,17 @@ type ContextConfig struct {
 	MaxTokens int    `mapstructure:"max_tokens"`
 }
 
-// LLMConfig is passed to the provider (non-secret).
-type LLMConfig struct {
-	Model        string  `mapstructure:"model"`
-	ContextModel string  `mapstructure:"context_model"`
-	Temperature  float64 `mapstructure:"temperature"`
-	MaxTokens    int     `mapstructure:"max_tokens"`
+// LLMCallConfig holds model parameters for one chat completion role.
+type LLMCallConfig struct {
+	Model       string  `mapstructure:"model"`
+	Temperature float64 `mapstructure:"temperature"`
+	MaxTokens   int     `mapstructure:"max_tokens"`
 }
 
-// ContextModelName returns the model for context extraction; falls back to Model.
-func (c LLMConfig) ContextModelName() string {
-	if c.ContextModel != "" {
-		return c.ContextModel
-	}
-	return c.Model
+// LLMConfig holds independent settings for translation and context extraction.
+type LLMConfig struct {
+	Translation LLMCallConfig `mapstructure:"translation"`
+	Context     LLMCallConfig `mapstructure:"context"`
 }
 
 // TranslationConfig controls optional dev/test limits on the translation pipeline.
