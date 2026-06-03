@@ -80,7 +80,7 @@ The body is the concatenated translated chunks.
 
 - Requires a **text-based PDF** (no OCR for scanned pages).
 - Complex layout (multi-column, heavy formatting) may produce noisy paragraph splits.
-- MVP uses plain-text extraction via `ledongthuc/pdf`; quality varies by source file.
+- MVP uses plain-text extraction via `razvandimescu/gopdf` with paragraph reflow; quality varies by source file.
 
 ## Manual test checklist (MVP)
 
