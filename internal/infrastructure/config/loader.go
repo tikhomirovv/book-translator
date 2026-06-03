@@ -5,10 +5,14 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	"github.com/subosito/gotenv"
 )
 
-// Load reads configuration: defaults → config.yaml → config.local.yaml → env.
+// Load reads configuration: .env → defaults → config.yaml → config.local.yaml → env.
 func Load(configDir string) (*Config, error) {
+	// Optional secrets file; missing .env is fine.
+	_ = gotenv.Load()
+
 	v := viper.New()
 	v.SetConfigType("yaml")
 
@@ -42,10 +46,10 @@ func Load(configDir string) (*Config, error) {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}
 
-	cfg.OpenAIAPIKey = firstNonEmpty(
+	cfg.OpenAIAPIKey = normalizeAPIKey(firstNonEmpty(
 		v.GetString("openai_api_key"),
 		v.GetString("BOOK_TRANSLATOR_OPENAI_API_KEY"),
-	)
+	))
 	cfg.OpenAIBaseURL = firstNonEmpty(
 		v.GetString("openai_base_url"),
 		v.GetString("BOOK_TRANSLATOR_OPENAI_BASE_URL"),
@@ -53,6 +57,16 @@ func Load(configDir string) (*Config, error) {
 	)
 
 	return &cfg, nil
+}
+
+// normalizeAPIKey treats template placeholders as empty (for local OpenAI-compatible servers).
+func normalizeAPIKey(key string) string {
+	switch strings.TrimSpace(key) {
+	case "", "sk-your-key", "your-key", "changeme":
+		return ""
+	default:
+		return strings.TrimSpace(key)
+	}
 }
 
 func setDefaults(v *viper.Viper) {

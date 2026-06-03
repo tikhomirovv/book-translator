@@ -73,7 +73,7 @@ type chatResponsePayload struct {
 
 // Chat sends a chat completion request.
 func (c *Client) Chat(ctx context.Context, req ports.ChatRequest) (*ports.ChatResponse, error) {
-	if c.apiKey == "" {
+	if c.apiKey == "" && requiresCloudAPIKey(c.baseURL) {
 		return nil, fmt.Errorf("openai api key is not configured")
 	}
 
@@ -99,7 +99,9 @@ func (c *Client) Chat(ctx context.Context, req ports.ChatRequest) (*ports.ChatRe
 		return nil, err
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
+	if c.apiKey != "" {
+		httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
+	}
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
@@ -142,6 +144,11 @@ func (c *Client) Chat(ctx context.Context, req ports.ChatRequest) (*ports.ChatRe
 		)
 	}
 	return out, nil
+}
+
+// requiresCloudAPIKey is true for the official OpenAI API endpoint.
+func requiresCloudAPIKey(baseURL string) bool {
+	return strings.Contains(strings.ToLower(baseURL), "api.openai.com")
 }
 
 func truncate(s string, max int) string {

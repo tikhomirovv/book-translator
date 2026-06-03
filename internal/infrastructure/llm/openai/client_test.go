@@ -78,3 +78,44 @@ func TestClient_Chat_missingUsage(t *testing.T) {
 		t.Fatalf("expected zero usage, got %+v", resp.Usage)
 	}
 }
+
+func TestClient_Chat_localServerWithoutAPIKey(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if auth := r.Header.Get("Authorization"); auth != "" {
+			t.Fatalf("unexpected auth header: %q", auth)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"choices": []map[string]any{
+				{"message": map[string]string{"content": "local"}},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	client := openai.NewClient("", srv.URL+"/v1", srv.Client())
+	resp, err := client.Chat(context.Background(), ports.ChatRequest{
+		Model:    "local-model",
+		Messages: []ports.ChatMessage{{Role: "user", Content: "hi"}},
+	})
+	if err != nil {
+		t.Fatalf("Chat: %v", err)
+	}
+	if resp.Content != "local" {
+		t.Fatalf("content: %q", resp.Content)
+	}
+}
+
+func TestClient_Chat_openAICloudRequiresKey(t *testing.T) {
+	t.Parallel()
+
+	client := openai.NewClient("", "https://api.openai.com/v1", nil)
+	_, err := client.Chat(context.Background(), ports.ChatRequest{
+		Model:    "gpt-4o-mini",
+		Messages: []ports.ChatMessage{{Role: "user", Content: "hi"}},
+	})
+	if err == nil {
+		t.Fatal("expected error without api key for OpenAI cloud")
+	}
+}
