@@ -190,6 +190,8 @@ func newTestStack(t *testing.T) *testStack {
 		IsLanguageAllowed: cfg.IsLanguageAllowed,
 		ChunkSize:         1,
 		Overlap:           0,
+		ParagraphFrom:     -1,
+		ParagraphTo:       -1,
 		DefaultPromptType: "nonfiction",
 		Model:             "mock",
 		Provider:          "mock",
@@ -204,6 +206,8 @@ func newTestStack(t *testing.T) *testStack {
 		BuildChunks:  chunk.BuildChunks,
 		ChunkSize:    1,
 		Overlap:      0,
+		ParagraphFrom: -1,
+		ParagraphTo:   -1,
 		Model:        "mock",
 		Provider:     "mock",
 	}

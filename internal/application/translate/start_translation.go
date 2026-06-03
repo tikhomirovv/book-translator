@@ -6,6 +6,7 @@ import (
 
 	"github.com/tikhomirovv/book-translator/internal/domain"
 	"github.com/tikhomirovv/book-translator/internal/domain/ports"
+	chunkinfra "github.com/tikhomirovv/book-translator/internal/infrastructure/chunk"
 )
 
 // LanguageValidator checks whether a target language is allowed.
@@ -28,6 +29,8 @@ type StartTranslation struct {
 	IsLanguageAllowed LanguageValidator
 	ChunkSize         int
 	Overlap           int
+	ParagraphFrom     int
+	ParagraphTo       int
 	DefaultPromptType string
 	Model             string
 	Provider          string
@@ -82,6 +85,14 @@ func (uc *StartTranslation) Execute(ctx context.Context, req StartTranslationReq
 		return nil, fmt.Errorf("%w: no text extracted from source", domain.ErrInvalidInput)
 	}
 
+	paragraphs = chunkinfra.FilterParagraphs(paragraphs, chunkinfra.ParagraphRange{
+		From: uc.ParagraphFrom,
+		To:   uc.ParagraphTo,
+	})
+	if len(paragraphs) == 0 {
+		return nil, fmt.Errorf("%w: no paragraphs in configured range", domain.ErrInvalidInput)
+	}
+
 	if err := uc.Store.SaveExtractedSource(ctx, tr.ID, paragraphs); err != nil {
 		return nil, fmt.Errorf("save extracted source: %w", err)
 	}
@@ -95,6 +106,8 @@ func (uc *StartTranslation) Execute(ctx context.Context, req StartTranslationReq
 			"paragraphs", len(paragraphs),
 			"chunks", len(chunks),
 			"chunk_size", uc.ChunkSize,
+			"paragraph_from", uc.ParagraphFrom,
+			"paragraph_to", uc.ParagraphTo,
 		)
 	}
 

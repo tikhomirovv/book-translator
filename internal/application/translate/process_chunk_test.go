@@ -41,7 +41,7 @@ func (m *mockLLM) Chat(ctx context.Context, req ports.ChatRequest) (*ports.ChatR
 			Content: `{"summary":"hero introduced","glossary":{"Alice":"protagonist"}}`,
 			Usage:   ports.ChatUsage{PromptTokens: 5, CompletionTokens: 3, TotalTokens: 8},
 		}, nil
-	case strings.Contains(userContent, "Translate the following"):
+	case strings.Contains(userContent, "Translate into") || strings.Contains(userContent, "Translate to"):
 		return &ports.ChatResponse{
 			Content: "Переведённый текст.",
 			Usage:   ports.ChatUsage{PromptTokens: 10, CompletionTokens: 4, TotalTokens: 14},

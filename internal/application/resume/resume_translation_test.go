@@ -99,6 +99,8 @@ func TestResumeTranslation_skipsCompletedChunks(t *testing.T) {
 		BuildChunks: chunkinfra.BuildChunks,
 		ChunkSize:   1,
 		Overlap:     0,
+		ParagraphFrom: -1,
+		ParagraphTo:   -1,
 		Model:       "test",
 	}
 
