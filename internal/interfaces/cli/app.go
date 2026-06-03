@@ -10,11 +10,12 @@ import (
 
 // App holds wired use cases for CLI commands.
 type App struct {
-	Start  *translate.StartTranslation
-	Resume *resume.ResumeTranslation
-	Status *query.GetStatus
-	List   *query.ListTranslations
-	Logger zerolog.Logger
+	Start            *translate.StartTranslation
+	Resume           *resume.ResumeTranslation
+	Status           *query.GetStatus
+	List             *query.ListTranslations
+	Logger           zerolog.Logger
+	AllowedLanguages []string
 }
 
 var app *App

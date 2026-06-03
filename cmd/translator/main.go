@@ -101,11 +101,12 @@ func main() {
 	}
 
 	cli.SetApp(&cli.App{
-		Start:  startUC,
-		Resume: resumeUC,
-		Status: &query.GetStatus{Store: fs},
-		List:   &query.ListTranslations{Store: fs},
-		Logger: logger,
+		Start:            startUC,
+		Resume:           resumeUC,
+		Status:           &query.GetStatus{Store: fs},
+		List:             &query.ListTranslations{Store: fs},
+		Logger:           logger,
+		AllowedLanguages: cfg.AllowedLanguages,
 	})
 
 	if err := cli.Execute(); err != nil {

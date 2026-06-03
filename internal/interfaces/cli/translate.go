@@ -37,13 +37,13 @@ func runTranslate(cmd *cobra.Command, args []string) error {
 	}
 
 	input, output, to, promptType, err := promptTranslateFlags(
-		translateInput, translateOutput, translateTo, translatePromptType,
+		translateInput, translateOutput, translateTo, translatePromptType, a.AllowedLanguages,
 	)
 	if err != nil {
 		return err
 	}
-	if input == "" || output == "" || to == "" {
-		return fmt.Errorf("input, output, and --to are required")
+	if err := validateTranslateArgs(input, output, to); err != nil {
+		return err
 	}
 
 	a.Logger.Info().Str("input", input).Str("output", output).Str("to", to).Msg("starting translation")
