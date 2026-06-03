@@ -18,7 +18,7 @@ type Registry struct {
 // NewRegistry builds a registry with MVP defaults (.pdf).
 func NewRegistry() *Registry {
 	r := &Registry{byExt: make(map[string]ports.TextExtractor)}
-	r.Register(".pdf", NewLedongthucPDF())
+	r.Register(".pdf", NewPDFExtractor())
 	return r
 }
 

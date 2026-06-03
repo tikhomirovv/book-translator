@@ -22,13 +22,13 @@ func TestNormalizeParagraphs(t *testing.T) {
 	}
 }
 
-func TestNormalizeParagraphs_pdfPlainText(t *testing.T) {
+func TestNormalizeParagraphs_doubleNewline(t *testing.T) {
 	t.Parallel()
 
-	// PDF extractors often emit single newlines without blank lines between paragraphs.
-	raw := "Table of Contents\nCover\nTitle Page\nChapter body line one.\nChapter body line two."
+	// Covered in paragraph_reflow_test.go with richer fixtures.
+	raw := "Alpha.\n\nBeta."
 	paras := extract.NormalizeParagraphs(raw)
-	if len(paras) < 3 {
-		t.Fatalf("expected multiple paragraphs from PDF-style text, got %d", len(paras))
+	if len(paras) != 2 {
+		t.Fatalf("expected 2 paragraphs, got %d", len(paras))
 	}
 }

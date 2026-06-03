@@ -9,13 +9,14 @@ import (
 const maxParagraphRunes = 6000
 
 // NormalizeParagraphs splits raw text into indexed paragraphs.
-// Markdown-style blank lines are preferred; PDF plain text falls back to empty-line
-// blocks and line splits when a block is too large.
+// PDF plain text is reflowed first; Markdown-style blank lines are preferred.
 func NormalizeParagraphs(text string) []domain.Paragraph {
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	if strings.TrimSpace(text) == "" {
 		return nil
 	}
+
+	text = ReflowPlainText(text)
 
 	parts := splitDoubleNewline(text)
 	if len(parts) > 1 {

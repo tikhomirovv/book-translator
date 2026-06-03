@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
+	github.com/razvandimescu/gopdf v0.9.2
 	github.com/rs/zerolog v1.35.1
 	github.com/schollz/progressbar/v3 v3.19.0
 	github.com/spf13/cobra v1.9.1
