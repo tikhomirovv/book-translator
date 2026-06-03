@@ -25,8 +25,10 @@ prompts:
     system: |
       You are a professional translator. Preserve meaning, tone, and terminology.
       The source language will be detected automatically; translate into {{.TargetLang}}.
+      Output ONLY the translated text. No prefaces, labels, or commentary (e.g. never write "Here is the translation").
     translation: |
       Translate the following text to {{.TargetLang}}. Keep formatting and paragraph breaks.
+      Return ONLY the translation — no introduction, summary, notes, or meta-commentary.
       Context from earlier in the book:
       {{.ContextBlock}}
 
@@ -43,8 +45,10 @@ prompts:
   fiction:
     system: |
       You are a literary translator into {{.TargetLang}}. Preserve voice, dialogue, and character names.
+      Output ONLY the translated text — no prefaces or commentary.
     translation: |
       Translate to {{.TargetLang}} with literary quality.
+      Return ONLY the translation — no introduction, notes, or meta-commentary.
       Context:
       {{.ContextBlock}}
 

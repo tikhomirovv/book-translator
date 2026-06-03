@@ -185,6 +185,33 @@ func (s *FilesystemStore) SaveChunk(ctx context.Context, id string, chunk domain
 	return os.WriteFile(filepath.Join(chunksDir, name), []byte(content), 0o644)
 }
 
+// SaveExtractedSource writes the normalized source paragraphs for debugging and resume.
+func (s *FilesystemStore) SaveExtractedSource(ctx context.Context, id string, paragraphs []domain.Paragraph) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if id == "" {
+		return domain.ErrInvalidInput
+	}
+	dir := s.translationDir(id)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return domain.ErrNotFound
+	} else if err != nil {
+		return err
+	}
+
+	extractDir := filepath.Join(dir, "extracted")
+	if err := os.MkdirAll(extractDir, 0o755); err != nil {
+		return err
+	}
+
+	var b strings.Builder
+	for _, p := range paragraphs {
+		fmt.Fprintf(&b, "# paragraph %d\n%s\n\n", p.Index, p.Text)
+	}
+	return os.WriteFile(filepath.Join(extractDir, "source.txt"), []byte(b.String()), 0o644)
+}
+
 // LoadTranslatedChunks reads saved chunk files in index order.
 func (s *FilesystemStore) LoadTranslatedChunks(ctx context.Context, id string) ([]domain.Chunk, error) {
 	if err := ctx.Err(); err != nil {

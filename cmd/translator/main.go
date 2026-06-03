@@ -23,13 +23,13 @@ import (
 )
 
 func main() {
-	logger := logging.NewLogger(os.Getenv("LOG_LEVEL"))
-
 	cfg, err := config.Load("configs")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: load config: %v\n", err)
 		os.Exit(1)
 	}
+
+	logger := logging.NewLogger(cfg.LogLevel)
 
 	renderer, err := prompt.NewYAMLRenderer(cfg.Prompts)
 	if err != nil {
@@ -85,6 +85,13 @@ func main() {
 		DefaultPromptType: "nonfiction",
 		Model:             cfg.LLM.Model,
 		Provider:          "openai",
+		LogDebug: func(msg string, kv ...any) {
+			ev := logger.Debug()
+			for i := 0; i+1 < len(kv); i += 2 {
+				ev = ev.Interface(fmt.Sprint(kv[i]), kv[i+1])
+			}
+			ev.Msg(msg)
+		},
 	}
 
 	resumeUC := &resume.ResumeTranslation{

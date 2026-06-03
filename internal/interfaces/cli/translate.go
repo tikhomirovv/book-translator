@@ -47,6 +47,12 @@ func runTranslate(cmd *cobra.Command, args []string) error {
 	}
 
 	a.Logger.Info().Str("input", input).Str("output", output).Str("to", to).Msg("starting translation")
+	a.Logger.Debug().
+		Str("input", input).
+		Str("output", output).
+		Str("to", to).
+		Str("prompt_type", promptType).
+		Msg("translate request")
 
 	var reporter func(completed, total int)
 	a.Start.OnProgress = func(completed, total int) {

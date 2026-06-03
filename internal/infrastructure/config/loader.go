@@ -40,10 +40,15 @@ func Load(configDir string) (*Config, error) {
 	// Common secret env names without prefix.
 	v.BindEnv("openai_api_key", "OPENAI_API_KEY")
 	v.BindEnv("openai_base_url", "OPENAI_BASE_URL")
+	v.BindEnv("log_level", "LOG_LEVEL")
 
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
+	}
+
+	if cfg.LogLevel == "" {
+		cfg.LogLevel = "info"
 	}
 
 	cfg.OpenAIAPIKey = normalizeAPIKey(firstNonEmpty(
@@ -79,6 +84,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("llm.max_tokens", 4096)
 	v.SetDefault("request_delay_ms", 1000)
 	v.SetDefault("allowed_languages", []string{"ru", "en"})
+	v.SetDefault("log_level", "info")
 }
 
 func firstNonEmpty(vals ...string) string {

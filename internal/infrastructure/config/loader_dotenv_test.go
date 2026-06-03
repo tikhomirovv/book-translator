@@ -35,14 +35,19 @@ prompts:
 	}
 	t.Cleanup(func() { _ = os.Chdir(origWD) })
 
+	if err := os.Unsetenv("OPENAI_API_KEY"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Unsetenv("OPENAI_BASE_URL"); err != nil {
+		t.Fatal(err)
+	}
+
 	if err := os.WriteFile(".env", []byte(`
 OPENAI_BASE_URL=http://192.168.1.50:1234/v1
 OPENAI_API_KEY=sk-your-key
 `), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("OPENAI_API_KEY", "")
-	t.Setenv("OPENAI_BASE_URL", "")
 
 	cfg, err := config.Load(cfgDir)
 	if err != nil {

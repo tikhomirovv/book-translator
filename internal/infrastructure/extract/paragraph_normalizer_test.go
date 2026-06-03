@@ -21,3 +21,14 @@ func TestNormalizeParagraphs(t *testing.T) {
 		t.Fatalf("third: %+v", paras[2])
 	}
 }
+
+func TestNormalizeParagraphs_pdfPlainText(t *testing.T) {
+	t.Parallel()
+
+	// PDF extractors often emit single newlines without blank lines between paragraphs.
+	raw := "Table of Contents\nCover\nTitle Page\nChapter body line one.\nChapter body line two."
+	paras := extract.NormalizeParagraphs(raw)
+	if len(paras) < 3 {
+		t.Fatalf("expected multiple paragraphs from PDF-style text, got %d", len(paras))
+	}
+}
