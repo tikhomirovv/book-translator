@@ -8,6 +8,7 @@ import (
 
 	"github.com/tikhomirovv/book-translator/internal/application/query"
 	"github.com/tikhomirovv/book-translator/internal/application/resume"
+	extracttext "github.com/tikhomirovv/book-translator/internal/application/extract"
 	"github.com/tikhomirovv/book-translator/internal/application/translate"
 	"github.com/tikhomirovv/book-translator/internal/domain/ports"
 	contextmgr "github.com/tikhomirovv/book-translator/internal/infrastructure/context"
@@ -110,6 +111,7 @@ func main() {
 	cli.SetApp(&cli.App{
 		Start:            startUC,
 		Resume:           resumeUC,
+		Extract:          &extracttext.ExtractSource{Extractor: registry},
 		Status:           &query.GetStatus{Store: fs},
 		List:             &query.ListTranslations{Store: fs},
 		Logger:           logger,

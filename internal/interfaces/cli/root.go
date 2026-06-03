@@ -13,7 +13,7 @@ var rootCmd = &cobra.Command{
 	Short: "Translate books (PDF) to Markdown using LLM",
 	Long:  "book-translator: resumable book translation with context memory.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return fmt.Errorf("use a subcommand (translate, resume, status, list)")
+		return fmt.Errorf("use a subcommand (translate, extract, resume, status, list)")
 	},
 }
 

@@ -15,6 +15,7 @@ import (
 
 	"github.com/tikhomirovv/book-translator/internal/domain"
 	"github.com/tikhomirovv/book-translator/internal/domain/ports"
+	"github.com/tikhomirovv/book-translator/internal/infrastructure/extract"
 )
 
 const defaultBaseDir = "translations"
@@ -205,11 +206,7 @@ func (s *FilesystemStore) SaveExtractedSource(ctx context.Context, id string, pa
 		return err
 	}
 
-	var b strings.Builder
-	for _, p := range paragraphs {
-		fmt.Fprintf(&b, "# paragraph %d\n%s\n\n", p.Index, p.Text)
-	}
-	return os.WriteFile(filepath.Join(extractDir, "source.txt"), []byte(b.String()), 0o644)
+	return os.WriteFile(filepath.Join(extractDir, "source.txt"), []byte(extract.FormatParagraphs(paragraphs)), 0o644)
 }
 
 // LoadTranslatedChunks reads saved chunk files in index order.

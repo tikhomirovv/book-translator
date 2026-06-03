@@ -3,6 +3,7 @@ package cli
 import (
 	"github.com/rs/zerolog"
 
+	extracttext "github.com/tikhomirovv/book-translator/internal/application/extract"
 	"github.com/tikhomirovv/book-translator/internal/application/query"
 	"github.com/tikhomirovv/book-translator/internal/application/resume"
 	"github.com/tikhomirovv/book-translator/internal/application/translate"
@@ -12,6 +13,7 @@ import (
 type App struct {
 	Start            *translate.StartTranslation
 	Resume           *resume.ResumeTranslation
+	Extract          *extracttext.ExtractSource
 	Status           *query.GetStatus
 	List             *query.ListTranslations
 	Logger           zerolog.Logger
