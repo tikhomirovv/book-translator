@@ -74,7 +74,7 @@ func TestStartTranslation_endToEndWithMocks(t *testing.T) {
 		ProcessChunk: process,
 		Finalize:     &translate.FinalizeTranslation{Store: fs},
 		NewContext: func(id string) ports.ContextManager {
-			return contextmgr.NewFixedWindow(fs, id, 2000)
+			return contextmgr.NewFixedWindow(fs, id)
 		},
 		BuildChunks:       chunkinfra.BuildChunks,
 		IsLanguageAllowed: cfg.IsLanguageAllowed,
@@ -124,7 +124,7 @@ func TestStartTranslation_rejectsInvalidLanguage(t *testing.T) {
 		Store:             store.NewFilesystemStore(t.TempDir()),
 		ProcessChunk:      &translate.ProcessChunk{},
 		Finalize:          &translate.FinalizeTranslation{},
-		NewContext:        func(id string) ports.ContextManager { return contextmgr.NewFixedWindow(nil, id, 100) },
+		NewContext:        func(id string) ports.ContextManager { return contextmgr.NewFixedWindow(nil, id) },
 		BuildChunks:       chunkinfra.BuildChunks,
 		IsLanguageAllowed: func(lang string) bool { return lang == "ru" },
 	}
@@ -176,7 +176,7 @@ func TestStartTranslation_paragraphRange(t *testing.T) {
 		Store:             fs,
 		ProcessChunk:      process,
 		Finalize:          &translate.FinalizeTranslation{Store: fs},
-		NewContext:        func(id string) ports.ContextManager { return contextmgr.NewFixedWindow(fs, id, 2000) },
+		NewContext:        func(id string) ports.ContextManager { return contextmgr.NewFixedWindow(fs, id) },
 		BuildChunks:       chunkinfra.BuildChunks,
 		IsLanguageAllowed: cfg.IsLanguageAllowed,
 		ChunkSize:         10,

@@ -42,7 +42,7 @@ func (m *trackingLLM) Chat(ctx context.Context, req ports.ChatRequest) (*ports.C
 	}
 
 	switch {
-	case strings.Contains(userContent, "extract only information"):
+	case strings.Contains(userContent, "You maintain rolling translation memory"):
 		if req.Model != m.contextModel {
 			return nil, errors.New("unexpected context model")
 		}
@@ -90,9 +90,9 @@ func (m *mockLLM) Chat(ctx context.Context, req ports.ChatRequest) (*ports.ChatR
 
 	// Route by rendered prompt content from config templates.
 	switch {
-	case strings.Contains(userContent, "extract only information"):
+	case strings.Contains(userContent, "You maintain rolling translation memory"):
 		return &ports.ChatResponse{
-			Content: `{"summary":"hero introduced","glossary":{"Alice":"protagonist"}}`,
+			Content: `updated translation memory`,
 			Usage:   ports.ChatUsage{PromptTokens: 5, CompletionTokens: 3, TotalTokens: 8},
 		}, nil
 	case strings.Contains(userContent, "Translate into") || strings.Contains(userContent, "Translate to"):
@@ -135,7 +135,7 @@ func TestProcessChunk_success(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mgr := contextmgr.NewFixedWindow(fs, tr.ID, 2000)
+	mgr := contextmgr.NewFixedWindow(fs, tr.ID)
 	if err := mgr.Load(ctx, tr.ID); err != nil {
 		t.Fatal(err)
 	}
@@ -188,8 +188,8 @@ func TestProcessChunk_success(t *testing.T) {
 	if reloaded.Usage.TotalTokens != 22 {
 		t.Fatalf("usage tokens = %d, want 22", reloaded.Usage.TotalTokens)
 	}
-	if !strings.Contains(reloaded.ContextSummary, "hero introduced") {
-		t.Fatalf("context summary missing extraction: %q", reloaded.ContextSummary)
+	if reloaded.ContextSummary != "updated translation memory" {
+		t.Fatalf("context summary = %q, want consolidated LLM output", reloaded.ContextSummary)
 	}
 	if loadedTr.LastCompletedChunk != 1 {
 		t.Fatalf("translation LastCompletedChunk = %d", loadedTr.LastCompletedChunk)
@@ -224,7 +224,7 @@ func TestProcessChunk_independentLLMProfiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mgr := contextmgr.NewFixedWindow(fs, tr.ID, 2000)
+	mgr := contextmgr.NewFixedWindow(fs, tr.ID)
 	if err := mgr.Load(ctx, tr.ID); err != nil {
 		t.Fatal(err)
 	}
@@ -289,7 +289,7 @@ func TestProcessChunk_enforcesSequentialIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mgr := contextmgr.NewFixedWindow(fs, tr.ID, 2000)
+	mgr := contextmgr.NewFixedWindow(fs, tr.ID)
 	if err := mgr.Load(ctx, tr.ID); err != nil {
 		t.Fatal(err)
 	}

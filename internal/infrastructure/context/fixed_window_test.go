@@ -9,7 +9,7 @@ import (
 	"github.com/tikhomirovv/book-translator/internal/infrastructure/store"
 )
 
-func TestFixedWindow_enforceBudget(t *testing.T) {
+func TestFixedWindow_replacesContext(t *testing.T) {
 	t.Parallel()
 
 	s := store.NewFilesystemStore(t.TempDir())
@@ -19,14 +19,11 @@ func TestFixedWindow_enforceBudget(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mgr := contextmgr.NewFixedWindow(s, tr.ID, 20)
-	long := stringsRepeat("word ", 200)
-	if err := mgr.AddExtracted(ctx, 1, map[string]any{
-		"summary": long,
-		"glossary": map[string]any{
-			"term": "definition",
-		},
-	}); err != nil {
+	mgr := contextmgr.NewFixedWindow(s, tr.ID)
+	if err := mgr.AddExtracted(ctx, 1, map[string]any{"summary": "first context"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := mgr.AddExtracted(ctx, 2, map[string]any{"summary": "second context"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -34,15 +31,20 @@ func TestFixedWindow_enforceBudget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(block) >= len(long) {
-		t.Fatalf("expected trimmed context, got len=%d", len(block))
+	if block != "second context" {
+		t.Fatalf("context = %q, want replacement not append", block)
 	}
 }
 
-func stringsRepeat(s string, n int) string {
-	out := make([]byte, 0, len(s)*n)
-	for i := 0; i < n; i++ {
-		out = append(out, s...)
+func TestFixedWindow_emptyContext(t *testing.T) {
+	t.Parallel()
+
+	mgr := contextmgr.NewFixedWindow(store.NewFilesystemStore(t.TempDir()), "id")
+	block, err := mgr.BuildPromptContext(context.Background())
+	if err != nil {
+		t.Fatal(err)
 	}
-	return string(out)
+	if block != "" {
+		t.Fatalf("empty context = %q", block)
+	}
 }

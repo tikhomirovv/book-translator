@@ -36,7 +36,7 @@ func (m *resumeMockLLM) Chat(ctx context.Context, req ports.ChatRequest) (*ports
 			user = msg.Content
 		}
 	}
-	if strings.Contains(user, "extract only information") {
+	if strings.Contains(user, "You maintain rolling") {
 		return &ports.ChatResponse{Content: `{"summary":"note"}`, Usage: ports.ChatUsage{TotalTokens: 1}}, nil
 	}
 	return &ports.ChatResponse{Content: "translated", Usage: ports.ChatUsage{TotalTokens: 2}}, nil
@@ -95,7 +95,7 @@ func TestResumeTranslation_skipsCompletedChunks(t *testing.T) {
 		ProcessChunk: process,
 		Finalize:     &translate.FinalizeTranslation{Store: fs},
 		NewContext: func(id string) ports.ContextManager {
-			return contextmgr.NewFixedWindow(fs, id, 2000)
+			return contextmgr.NewFixedWindow(fs, id)
 		},
 		BuildChunks: chunkinfra.BuildChunks,
 		ChunkSize:   1,
@@ -145,7 +145,7 @@ func TestResumeTranslation_idempotentWhenCompleted(t *testing.T) {
 		Store:        fs,
 		ProcessChunk: &translate.ProcessChunk{},
 		Finalize:     &translate.FinalizeTranslation{Store: fs},
-		NewContext:   func(id string) ports.ContextManager { return contextmgr.NewFixedWindow(fs, id, 100) },
+		NewContext:   func(id string) ports.ContextManager { return contextmgr.NewFixedWindow(fs, id) },
 		BuildChunks:  chunkinfra.BuildChunks,
 	}
 
