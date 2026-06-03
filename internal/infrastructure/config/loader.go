@@ -81,7 +81,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("context.max_tokens", 2000)
 	v.SetDefault("llm.model", "gpt-4o-mini")
 	v.SetDefault("llm.temperature", 0.3)
-	v.SetDefault("llm.max_tokens", 4096)
+	v.SetDefault("llm.max_tokens", 32768)
 	v.SetDefault("translation.paragraph_from", -1)
 	v.SetDefault("translation.paragraph_to", -1)
 	v.SetDefault("request_delay_ms", 1000)
