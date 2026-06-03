@@ -4,9 +4,10 @@ package config
 type Config struct {
 	Chunk            ChunkConfig            `mapstructure:"chunk"`
 	LLM              LLMConfig              `mapstructure:"llm"`
-	Translation      TranslationConfig      `mapstructure:"translation"`
-	RequestDelayMs   int                    `mapstructure:"request_delay_ms"`
-	AllowedLanguages []string               `mapstructure:"allowed_languages"`
+	Translation         TranslationConfig      `mapstructure:"translation"`
+	RequestDelayMs      int                    `mapstructure:"request_delay_ms"`
+	RequestTimeoutSeconds int                  `mapstructure:"request_timeout_seconds"`
+	AllowedLanguages    []string               `mapstructure:"allowed_languages"`
 	LogLevel         string                 `mapstructure:"log_level"`
 	Prompts          map[string]PromptSet   `mapstructure:"prompts"`
 	// Secrets from env (not in yaml)

@@ -45,3 +45,27 @@ prompts:
 		t.Fatalf("context max_tokens = %d", cfg.LLM.Context.MaxTokens)
 	}
 }
+
+func TestLoad_requestTimeoutSeconds(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "config.yaml"), []byte(`
+request_timeout_seconds: 600
+allowed_languages:
+  - ru
+prompts:
+  nonfiction:
+    system: "s"
+    translation: "t"
+    context_extraction: "c"
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.RequestTimeoutSeconds != 600 {
+		t.Fatalf("request_timeout_seconds = %d, want 600", cfg.RequestTimeoutSeconds)
+	}
+}

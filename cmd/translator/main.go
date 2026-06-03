@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -41,7 +42,9 @@ func main() {
 	fs := store.NewFilesystemStore("")
 	registry := extract.NewRegistry()
 
-	baseLLM := openai.NewClient(cfg.OpenAIAPIKey, cfg.OpenAIBaseURL, nil)
+	baseLLM := openai.NewClient(cfg.OpenAIAPIKey, cfg.OpenAIBaseURL, &http.Client{
+		Timeout: time.Duration(cfg.RequestTimeoutSeconds) * time.Second,
+	})
 	llm := &llminfra.RateLimitedLLM{
 		Inner: &llminfra.RetryLLM{
 			Inner:       baseLLM,

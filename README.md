@@ -63,6 +63,8 @@ translation:
 
 Leave both at `-1` (default) for a full-book run.
 
+`request_timeout_seconds` — HTTP timeout per LLM request (default `120`). Increase for slow local models (e.g. Sonnet via LM Studio).
+
 ## Usage
 
 ### Translate a new book (flags)

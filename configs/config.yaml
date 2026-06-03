@@ -15,6 +15,7 @@ llm:
     max_tokens: 8192
 
 request_delay_ms: 1000
+request_timeout_seconds: 120
 
 # Optional: translate only a paragraph index range for cheap testing (inclusive, 0-based).
 # Leave at -1 (default) to translate the full book.
