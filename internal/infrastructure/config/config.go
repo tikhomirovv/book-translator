@@ -29,9 +29,18 @@ type ContextConfig struct {
 
 // LLMConfig is passed to the provider (non-secret).
 type LLMConfig struct {
-	Model       string  `mapstructure:"model"`
-	Temperature float64 `mapstructure:"temperature"`
-	MaxTokens   int     `mapstructure:"max_tokens"`
+	Model        string  `mapstructure:"model"`
+	ContextModel string  `mapstructure:"context_model"`
+	Temperature  float64 `mapstructure:"temperature"`
+	MaxTokens    int     `mapstructure:"max_tokens"`
+}
+
+// ContextModelName returns the model for context extraction; falls back to Model.
+func (c LLMConfig) ContextModelName() string {
+	if c.ContextModel != "" {
+		return c.ContextModel
+	}
+	return c.Model
 }
 
 // TranslationConfig controls optional dev/test limits on the translation pipeline.

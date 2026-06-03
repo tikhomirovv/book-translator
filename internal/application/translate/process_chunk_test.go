@@ -21,6 +21,44 @@ type mockLLM struct {
 	calls int
 }
 
+type trackingLLM struct {
+	translateModel string
+	contextModel   string
+	models         []string
+}
+
+func (m *trackingLLM) Chat(ctx context.Context, req ports.ChatRequest) (*ports.ChatResponse, error) {
+	m.models = append(m.models, req.Model)
+
+	userContent := ""
+	for _, msg := range req.Messages {
+		if msg.Role == "user" {
+			userContent = msg.Content
+		}
+	}
+
+	switch {
+	case strings.Contains(userContent, "extract only information"):
+		if req.Model != m.contextModel {
+			return nil, errors.New("unexpected context model")
+		}
+		return &ports.ChatResponse{
+			Content: `{"summary":"notes"}`,
+			Usage:   ports.ChatUsage{PromptTokens: 1, CompletionTokens: 1, TotalTokens: 2},
+		}, nil
+	case strings.Contains(userContent, "Translate into") || strings.Contains(userContent, "Translate to"):
+		if req.Model != m.translateModel {
+			return nil, errors.New("unexpected translation model")
+		}
+		return &ports.ChatResponse{
+			Content: "Translated.",
+			Usage:   ports.ChatUsage{PromptTokens: 1, CompletionTokens: 1, TotalTokens: 2},
+		}, nil
+	default:
+		return nil, errors.New("unexpected prompt")
+	}
+}
+
 func (m *mockLLM) Chat(ctx context.Context, req ports.ChatRequest) (*ports.ChatResponse, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -134,6 +172,71 @@ func TestProcessChunk_success(t *testing.T) {
 	}
 	if loadedTr.LastCompletedChunk != 1 {
 		t.Fatalf("translation LastCompletedChunk = %d", loadedTr.LastCompletedChunk)
+	}
+}
+
+func TestProcessChunk_separateContextModel(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	fs := store.NewFilesystemStore(t.TempDir())
+	tr := domain.NewTranslation("", "/book.pdf", "/out.md", "ru", "nonfiction")
+	if err := fs.Create(ctx, tr); err != nil {
+		t.Fatal(err)
+	}
+
+	state, _, err := fs.Load(ctx, tr.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.TotalChunks = 1
+	if err := fs.SaveState(ctx, tr.ID, state); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := config.Load(filepath.Join(repoRoot(t), "configs"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	renderer, err := prompt.NewYAMLRenderer(cfg.Prompts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mgr := contextmgr.NewFixedWindow(fs, tr.ID, 2000)
+	if err := mgr.Load(ctx, tr.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	llm := &trackingLLM{
+		translateModel: "big-translate",
+		contextModel:   "small-context",
+	}
+	uc := &translate.ProcessChunk{
+		LLM:     llm,
+		Store:   fs,
+		Prompts: renderer,
+		Context: mgr,
+		LLMCfg: translate.LLMConfig{
+			Model:        "big-translate",
+			ContextModel: "small-context",
+			MaxTokens:    1024,
+		},
+	}
+
+	if err := uc.Execute(ctx, translate.ProcessChunkRequest{
+		TranslationID: tr.ID,
+		PromptType:    "nonfiction",
+		Chunk: domain.Chunk{
+			Index:      1,
+			SourceText: "Sample paragraph.",
+		},
+	}); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+
+	if len(llm.models) != 2 {
+		t.Fatalf("models used: %v, want 2 calls", llm.models)
 	}
 }
 

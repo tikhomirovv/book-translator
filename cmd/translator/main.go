@@ -52,9 +52,10 @@ func main() {
 	}
 
 	llmCfg := translate.LLMConfig{
-		Model:       cfg.LLM.Model,
-		Temperature: cfg.LLM.Temperature,
-		MaxTokens:   cfg.LLM.MaxTokens,
+		Model:        cfg.LLM.Model,
+		ContextModel: cfg.LLM.ContextModel,
+		Temperature:  cfg.LLM.Temperature,
+		MaxTokens:    cfg.LLM.MaxTokens,
 	}
 
 	processChunk := &translate.ProcessChunk{

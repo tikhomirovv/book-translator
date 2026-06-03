@@ -9,3 +9,4 @@
 #
 # llm:
 #   model: gpt-4o
+#   context_model: gpt-4o-mini

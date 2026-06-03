@@ -20,9 +20,17 @@ const (
 
 // LLMConfig holds non-secret model parameters for chat calls.
 type LLMConfig struct {
-	Model       string
-	Temperature float64
-	MaxTokens   int
+	Model        string
+	ContextModel string
+	Temperature  float64
+	MaxTokens    int
+}
+
+func (c LLMConfig) contextModel() string {
+	if c.ContextModel != "" {
+		return c.ContextModel
+	}
+	return c.Model
 }
 
 // ProcessChunk translates one chunk and extracts context in parallel.
@@ -121,7 +129,7 @@ func (uc *ProcessChunk) Execute(ctx context.Context, req ProcessChunkRequest) er
 
 	g.Go(func() error {
 		resp, err := uc.LLM.Chat(gctx, ports.ChatRequest{
-			Model: uc.LLMCfg.Model,
+			Model: uc.LLMCfg.contextModel(),
 			Messages: []ports.ChatMessage{
 				{Role: "system", Content: systemPrompt},
 				{Role: "user", Content: contextPrompt},
