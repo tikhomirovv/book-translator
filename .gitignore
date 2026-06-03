@@ -26,3 +26,4 @@ configs/config.local.yaml
 # Test
 coverage.out
 *.test
+.books
