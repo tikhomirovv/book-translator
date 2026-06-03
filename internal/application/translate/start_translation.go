@@ -32,6 +32,7 @@ type StartTranslation struct {
 	Model             string
 	Provider          string
 	OnProgress        func(completed, total int)
+	LogDebug          func(msg string, kv ...any)
 }
 
 // StartTranslationRequest starts a new translation job.
@@ -81,9 +82,20 @@ func (uc *StartTranslation) Execute(ctx context.Context, req StartTranslationReq
 		return nil, fmt.Errorf("%w: no text extracted from source", domain.ErrInvalidInput)
 	}
 
+	if err := uc.Store.SaveExtractedSource(ctx, tr.ID, paragraphs); err != nil {
+		return nil, fmt.Errorf("save extracted source: %w", err)
+	}
+
 	chunks := uc.BuildChunks(paragraphs, uc.ChunkSize, uc.Overlap)
 	if len(chunks) == 0 {
 		return nil, fmt.Errorf("%w: no chunks built from source", domain.ErrInvalidInput)
+	}
+	if uc.LogDebug != nil {
+		uc.LogDebug("extract and chunk plan",
+			"paragraphs", len(paragraphs),
+			"chunks", len(chunks),
+			"chunk_size", uc.ChunkSize,
+		)
 	}
 
 	state, _, err := uc.Store.Load(ctx, tr.ID)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/tikhomirovv/book-translator/internal/application/query"
 	"github.com/tikhomirovv/book-translator/internal/application/resume"
+	extracttext "github.com/tikhomirovv/book-translator/internal/application/extract"
 	"github.com/tikhomirovv/book-translator/internal/application/translate"
 	"github.com/tikhomirovv/book-translator/internal/domain/ports"
 	contextmgr "github.com/tikhomirovv/book-translator/internal/infrastructure/context"
@@ -23,13 +24,13 @@ import (
 )
 
 func main() {
-	logger := logging.NewLogger(os.Getenv("LOG_LEVEL"))
-
 	cfg, err := config.Load("configs")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: load config: %v\n", err)
 		os.Exit(1)
 	}
+
+	logger := logging.NewLogger(cfg.LogLevel)
 
 	renderer, err := prompt.NewYAMLRenderer(cfg.Prompts)
 	if err != nil {
@@ -85,6 +86,13 @@ func main() {
 		DefaultPromptType: "nonfiction",
 		Model:             cfg.LLM.Model,
 		Provider:          "openai",
+		LogDebug: func(msg string, kv ...any) {
+			ev := logger.Debug()
+			for i := 0; i+1 < len(kv); i += 2 {
+				ev = ev.Interface(fmt.Sprint(kv[i]), kv[i+1])
+			}
+			ev.Msg(msg)
+		},
 	}
 
 	resumeUC := &resume.ResumeTranslation{
@@ -101,11 +109,13 @@ func main() {
 	}
 
 	cli.SetApp(&cli.App{
-		Start:  startUC,
-		Resume: resumeUC,
-		Status: &query.GetStatus{Store: fs},
-		List:   &query.ListTranslations{Store: fs},
-		Logger: logger,
+		Start:            startUC,
+		Resume:           resumeUC,
+		Extract:          &extracttext.ExtractSource{Extractor: registry},
+		Status:           &query.GetStatus{Store: fs},
+		List:             &query.ListTranslations{Store: fs},
+		Logger:           logger,
+		AllowedLanguages: cfg.AllowedLanguages,
 	})
 
 	if err := cli.Execute(); err != nil {

@@ -31,8 +31,8 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if id == "" {
-		return fmt.Errorf("translation id is required")
+	if err := validateTranslationID(id); err != nil {
+		return err
 	}
 
 	view, err := a.Status.Execute(context.Background(), id)

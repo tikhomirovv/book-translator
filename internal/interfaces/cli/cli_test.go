@@ -13,7 +13,7 @@ func TestRoot_hasExpectedSubcommands(t *testing.T) {
 		names[cmd.Name()] = true
 	}
 
-	for _, want := range []string{"translate", "resume", "status", "list", "version"} {
+	for _, want := range []string{"translate", "extract", "resume", "status", "list", "version"} {
 		if !names[want] {
 			t.Errorf("missing subcommand %q", want)
 		}

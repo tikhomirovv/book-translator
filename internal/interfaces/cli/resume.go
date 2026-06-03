@@ -32,8 +32,8 @@ func runResume(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if id == "" {
-		return fmt.Errorf("translation id is required")
+	if err := validateTranslationID(id); err != nil {
+		return err
 	}
 
 	a.Logger.Info().Str("translation_id", id).Msg("resuming translation")

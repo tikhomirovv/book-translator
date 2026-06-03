@@ -7,6 +7,7 @@ type Config struct {
 	LLM            LLMConfig              `mapstructure:"llm"`
 	RequestDelayMs int                    `mapstructure:"request_delay_ms"`
 	AllowedLanguages []string             `mapstructure:"allowed_languages"`
+	LogLevel         string               `mapstructure:"log_level"`
 	Prompts        map[string]PromptSet   `mapstructure:"prompts"`
 	// Secrets from env (not in yaml)
 	OpenAIAPIKey  string `mapstructure:"-"`
